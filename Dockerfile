@@ -26,6 +26,6 @@ WORKDIR /base
 COPY --from=build /app/base /
 COPY --from=build /app/build/bin .
 
-RUN echo "/base/" >> /etc/ld.so.conf
+RUN echo "/base" >> /etc/ld-musl-x86_64.path
 
 CMD subconverter

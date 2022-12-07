@@ -49,7 +49,7 @@ if(NOT CXX17_FILESYSTEM AND NOT CXX17_FILESYSTEM_LIBFS)
     set(CMAKE_REQUIRED_LIBRARIES stdc++fs)
     check_cxx_source_compiles("${FS_TESTCODE}" CXX11_EXP_FILESYSTEM_LIBFS)
   endif()
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/filesystem.hxx.in"
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/filesystem.hxx.in"
                  "${CMAKE_CURRENT_BINARY_DIR}/filesystem" @ONLY)
 endif()
 cmake_pop_check_state()
