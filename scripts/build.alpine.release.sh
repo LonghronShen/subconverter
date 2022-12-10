@@ -1,57 +1,10 @@
 #!/bin/bash
+
 set -xe
 
-apk add gcc g++ build-base linux-headers cmake make autoconf automake libtool python2
-apk add mbedtls-dev mbedtls-static zlib-dev rapidjson-dev libevent-dev libevent-static zlib-static pcre2-dev
+ALPINE_VER="$(cat /etc/os-release | grep VERSION | cut -d = -f 2)"
 
-git clone https://github.com/curl/curl --depth=1
-cd curl
-cmake -DCURL_USE_MBEDTLS=ON -DHTTP_ONLY=ON -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_USE_LIBSSH2=OFF -DBUILD_CURL_EXE=OFF . > /dev/null
-make install -j2 > /dev/null
-cd ..
+apk add --no-cache --virtual .build-deps libevent-dev pcre2-dev boost-dev icu-dev openssl-dev python3 ninja && \
+    python3 -m pip install --upgrade pip && python3 -m pip install cmake
 
-git clone https://github.com/jbeder/yaml-cpp --depth=1
-cd yaml-cpp
-cmake -DCMAKE_BUILD_TYPE=Release -DYAML_CPP_BUILD_TESTS=OFF -DYAML_CPP_BUILD_TOOLS=OFF . > /dev/null
-make install -j2 > /dev/null
-cd ..
-
-git clone https://github.com/ftk/quickjspp --depth=1
-cd quickjspp
-cmake -DCMAKE_BUILD_TYPE=Release .
-make quickjs -j2
-install -m644 quickjs/libquickjs.a /usr/lib/
-install -d /usr/include/quickjs/
-install -m644 quickjs/quickjs.h quickjs/quickjs-libc.h /usr/include/quickjs/
-install -m644 quickjspp.hpp /usr/include/
-cd ..
-
-git clone https://github.com/PerMalmberg/libcron --depth=1
-cd libcron
-git submodule update --init
-cmake -DCMAKE_BUILD_TYPE=Release .
-make libcron -j2
-install -m644 libcron/out/Release/liblibcron.a /usr/lib/
-install -d /usr/include/libcron/
-install -m644 libcron/include/libcron/* /usr/include/libcron/
-install -d /usr/include/date/
-install -m644 libcron/externals/date/include/date/* /usr/include/date/
-cd ..
-
-git clone https://github.com/ToruNiina/toml11 --depth=1
-cd toml11
-cmake .
-make install -j4
-cd ..
-
-export PKG_CONFIG_PATH=/usr/lib64/pkgconfig
-cmake -DCMAKE_BUILD_TYPE=Release .
-make -j2
-rm subconverter
-g++ -o base/subconverter $(find CMakeFiles/subconverter.dir/src/ -name "*.o")  -static -lpcre2-8 -levent -lyaml-cpp -L/usr/lib64 -lcurl -lmbedtls -lmbedcrypto -lmbedx509 -lz -lquickjs -llibcron -O3 -s  
-
-cd base
-chmod +rx subconverter
-chmod +r ./*
-cd ..
-mv base subconverter
+bash ./build.sh

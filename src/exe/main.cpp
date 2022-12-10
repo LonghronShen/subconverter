@@ -20,7 +20,7 @@
 #include "utils/rapidjson_extra.h"
 #include "utils/system.h"
 #include "utils/urlencode.h"
-#include "version.h"
+#include <subconverter/version.h>
 
 //#include "vfs.h"
 

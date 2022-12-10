@@ -13,6 +13,12 @@ set(BUILD_TARGET_NAME ${project_name})
 
 project(${project_name} C CXX)
 
+if(CMAKE_COMPILER_IS_GNUCC)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.4)
+    message(FATAL_ERROR "GCC ${CMAKE_CXX_COMPILER_VERSION} is not supported.")
+  endif()
+endif()
+
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "Set to 11 or 14 to enable C++11 or C++17 builds, respectively." FORCE)
 set(CMAKE_C_STANDARD 11 CACHE STRING "Set to 99 or 11 to enable C99 or C11 builds, respectively." FORCE)
 set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
@@ -44,4 +50,5 @@ option(BUILD_STATIC_LIBRARY "Build a static library containing only the essentia
 
 include(external/InitializeExternalComponents.cmake)
 
+add_subdirectory(base)
 add_subdirectory(src)

@@ -9,7 +9,7 @@
 
 #include "../utils/map_extra.h"
 #include "../utils/string.h"
-#include "../version.h"
+#include <subconverter/version.h>
 
 struct Request {
   std::string method;

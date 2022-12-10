@@ -13,7 +13,7 @@
 #include "../utils/file_extra.h"
 #include "../utils/logger.h"
 #include "../utils/urlencode.h"
-#include "../version.h"
+#include <subconverter/version.h>
 #include "webget.h"
 
 #ifdef _WIN32

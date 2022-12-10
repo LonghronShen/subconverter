@@ -90,16 +90,20 @@ endif()
 
 
 # curl
-FetchContent_Declare(curl
-    GIT_REPOSITORY https://github.com/curl/curl
-    GIT_TAG master)
+find_package(CURL QUIET)
+if(CURL_FOUND)
+    message(STATUS "Using system libcurl: ${CURL_LIBRARIES}")
+else()
+  FetchContent_Declare(curl
+      GIT_REPOSITORY https://github.com/curl/curl
+      GIT_TAG master)
 
-FetchContent_GetProperties(curl)
-if(NOT curl_POPULATED)
-    FetchContent_Populate(curl)
-    add_subdirectory(${curl_SOURCE_DIR} ${curl_BINARY_DIR} EXCLUDE_FROM_ALL)
+  FetchContent_GetProperties(curl)
+  if(NOT curl_POPULATED)
+      FetchContent_Populate(curl)
+      add_subdirectory(${curl_SOURCE_DIR} ${curl_BINARY_DIR} EXCLUDE_FROM_ALL)
+  endif()
 endif()
-
 
 # nlohmann_json
 FetchContent_Declare(json

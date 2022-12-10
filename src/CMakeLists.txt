@@ -12,6 +12,27 @@ file(GLOB_RECURSE public_headers
     ${CMAKE_CURRENT_LIST_DIR}/lib/*.hpp
 )
 
+if(DEFINED ENV{SHA})
+	set(VERSION "$ENV{SHA}")
+else()
+    execute_process(
+        COMMAND
+            git rev-parse HEAD
+        RESULT_VARIABLE
+            SUBCONVERTER_VERSION_RESULT
+        OUTPUT_VARIABLE
+            SUBCONVERTER_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(SUBCONVERTER_VERSION_RESULT AND NOT SUBCONVERTER_VERSION_RESULT EQUAL 0)
+        set(VERSION "v0.7.2")
+    else()
+        set(VERSION "${SUBCONVERTER_VERSION}")
+    endif()
+endif()
+
+message(STATUS "subconverter version: ${VERSION}")
+configure_file(${CMAKE_CURRENT_LIST_DIR}/lib/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/subconverter/version.h @ONLY)
+
 add_library(${BUILD_TARGET_NAME}-lib STATIC ${src})
 target_compile_definitions(${BUILD_TARGET_NAME}-lib
     PRIVATE -DCURL_STATICLIB
@@ -28,6 +49,7 @@ if(USING_MALLOC_TRIM)
 endif()
 
 target_include_directories(${BUILD_TARGET_NAME}-lib
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
     PUBLIC ${LIBEVENT_INCLUDE_DIR}
     PUBLIC ${PCRE2_INCLUDE_DIR}
     PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib
