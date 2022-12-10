@@ -3,7 +3,10 @@ file(GLOB_RECURSE res_files
 )
 
 foreach(res IN ITEMS ${res_files})
-    get_filename_component(OUTPUT_FILE_WE ${INPUT_FILE} NAME_WE)
+    get_filename_component(res_name ${res} NAME)
+    if(res_name STREQUAL "CMakeLists.txt")
+        continue()
+    endif()
     file(RELATIVE_PATH buildDirRelFilePath "${CMAKE_CURRENT_LIST_DIR}" "${res}")
 	message(STATUS "Copying \"${buildDirRelFilePath}\" to \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\" ...")
 	configure_file("${res}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${buildDirRelFilePath}" COPYONLY)
