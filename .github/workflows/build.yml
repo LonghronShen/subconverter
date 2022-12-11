@@ -80,9 +80,9 @@ jobs:
           apt install -y git build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev libpcre2-dev ninja-build
 
           python3 -m pip install --upgrade pip
-          PIP_ONLY_BINARY=cmake python3 -m pip install cmake
+          PIP_ONLY_BINARY=cmake python3 -m pip install cmake || true
 
-          if [ $? -ne 0 ]; then
+          hash cmake 2>/dev/null || {
               echo "Build CMake from source ..."
               pushd /tmp
               git clone --depth=1 -b v3.25.1 https://github.com/Kitware/CMake.git
@@ -93,7 +93,7 @@ jobs:
               popd
               rm -rf CMake
               popd
-          fi
+          }
 
           cmake --version
 
