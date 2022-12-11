@@ -43,7 +43,7 @@ RUN apk add --no-cache boost libevent icu pcre2 libcurl
 # set entry
 WORKDIR /base
 
-COPY --from=build /app/subconverter/build/bin /base
+COPY --from=build /app/build/bin /base
 
 RUN echo "/base" >> /etc/ld-musl-x86_64.path
 
