@@ -6,104 +6,92 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux32_build:
-    name: Linux x86 Build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    # - name: Add commit id into version
-    #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-    #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
-    - name: Build
-      run: docker run --rm -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:x86-v3.10 /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
-    - name: Upload
-      uses: actions/upload-artifact@v1
-      with:
-        name: subconverter_linux32
-        path: subconverter/
-    - name: Package Release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: tar czf subconverter_linux32.tar.gz subconverter
-    - name: Draft Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: subconverter_linux32.tar.gz
-        draft: true
-
-  linux64_build:
+  linux_x86_build:
     name: Linux x86_64 Build
     runs-on: ubuntu-latest
+
+    # Run steps on a matrix of 3 arch/distro combinations
+    strategy:
+      matrix:
+        include:
+          - arch: x86
+            distro: x86-v3.10
+          - arch: amd64
+            distro: amd64-v3.10
+
     steps:
     - uses: actions/checkout@v2
-    # - name: Add commit id into version
-    #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-    #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
     - name: Build
-      run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:amd64-v3.10 /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
+      run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:${{ matrix.distro }} /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
     - name: Upload
       uses: actions/upload-artifact@v1
       with:
-        name: subconverter_linux64
+        name: subconverter_${{ matrix.arch }}
         path: subconverter/
     - name: Package Release
       if: startsWith(github.ref, 'refs/tags/')
-      run: tar czf subconverter_linux64.tar.gz subconverter
+      run: tar czf subconverter_${{ matrix.arch }}.tar.gz subconverter
     - name: Draft Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: subconverter_linux64.tar.gz
+        files: subconverter_${{ matrix.arch }}.tar.gz
         draft: true
 
-  armv7_build:
-    name: Linux armv7 Build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    # - name: Add commit id into version
-    #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-    #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
-    - name: Build
-      run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:armv7-v3.10 /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
-    - name: Upload
-      uses: actions/upload-artifact@v1
-      with:
-        name: subconverter_armv7
-        path: subconverter/
-    - name: Package Release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: tar czf subconverter_armv7.tar.gz subconverter
-    - name: Draft Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: subconverter_armv7.tar.gz
-        draft: true
+  linux_arm_build:
+    # The host should always be linux
+    runs-on: ubuntu-18.04
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
 
-  aarch64_build:
-    name: Linux aarch64 Build
-    runs-on: ubuntu-latest
+    # Run steps on a matrix of 3 arch/distro combinations
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            distro: ubuntu18.04
+          - arch: armv7
+            distro: ubuntu18.04
+
     steps:
     - uses: actions/checkout@v2
-    # - name: Add commit id into version
-    #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-    #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
-    - name: Build
-      run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:aarch64-v3.10 /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
+    - uses: uraimo/run-on-arch-action@v2
+      name: Run commands
+      id: runcmd
+      with:
+        arch: ${{ matrix.arch }}
+        distro: ${{ matrix.distro }}
+
+        # Not required, but speeds up builds by storing container images in
+        # a GitHub package registry.
+        githubToken: ${{ github.token }}
+
+        # Install some dependencies in the container. This speeds up builds if
+        # you are also using githubToken. Any dependencies installed here will
+        # be part of the container image that gets cached, so subsequent
+        # builds don't have to re-install them. The image layer is cached
+        # publicly in your project's package repository, so it is vital that
+        # no secrets are present in the container state or logs.
+        install: |
+          bash ./scripts/bootstrap.sh
+
+        # Set an output parameter `uname` for use in subsequent steps
+        run: |
+          uname -a
+          echo ::set-output name=uname::$(uname -a)
+          bash ./scripts/build.sh
     - name: Upload
       uses: actions/upload-artifact@v1
       with:
-        name: subconverter_aarch64
+        name: subconverter_${{ matrix.arch }}
         path: subconverter/
     - name: Package Release
       if: startsWith(github.ref, 'refs/tags/')
-      run: tar czf subconverter_aarch64.tar.gz subconverter
+      run: tar czf subconverter_${{ matrix.arch }}.tar.gz subconverter
     - name: Draft Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: subconverter_aarch64.tar.gz
+        files: subconverter_${{ matrix.arch }}.tar.gz
         draft: true
 
   macos_build:
@@ -111,9 +99,6 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
-    # - name: Add commit id into version
-    #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-    #   run: SHA=$(git rev-parse --short HEAD) && sed -i -e 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
     - name: Build
       run: cd scripts && ./build.macos.release.sh
     - name: Upload
@@ -131,76 +116,42 @@ jobs:
         files: subconverter_darwin64.tar.gz
         draft: true
 
-  windows64_build:
-    name: Windows x86_64 Build
+  windows_build:
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-    - uses: actions/checkout@v2
-    # - uses: actions/setup-node@v2-beta
-    #   with:
-    #     node-version: '12'
-    - uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: base-devel git mingw-w64-x86_64-cmake mingw-w64-x86_64-libevent mingw-w64-x86_64-pcre2 patch
-        msystem: CLANG64
-        path-type: inherit
-    # - name: Add commit id into version
-    #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-    #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
-    - name: Build
-      run: cd scripts && bash ./build.windows.release.sh
-    - name: Upload
-      uses: actions/upload-artifact@v1
-      with:
-        name: subconverter_win64
-        path: subconverter/
-    - name: Package Release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: 7z a subconverter_win64.7z subconverter/
-    - name: Draft Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: subconverter_win64.7z
-        draft: true
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
 
-  windows32_build:
-    name: Windows x86 Build
-    runs-on: windows-latest
+    # Run steps on a matrix of 3 arch/distro combinations
+    strategy:
+      matrix:
+        include:
+          - { msystem: CLANG64, env: x86_64, name: win64 }
+          - { msystem: CLANG32, env: i686, name: win32 }
+
     defaults:
       run:
         shell: msys2 {0}
+
     steps:
     - uses: actions/checkout@v2
-    # - uses: actions/setup-node@v2-beta
-    #   with:
-    #     node-version: '12'
     - uses: msys2/setup-msys2@v2
       with:
         update: true
-        install: base-devel git mingw-w64-i686-cmake mingw-w64-i686-libevent mingw-w64-i686-pcre2 patch
-        msystem: CLANG32
+        install: base-devel git mingw-w64-${{ matrix.env }}-cmake mingw-w64-${{ matrix.env }}-libevent mingw-w64-${{ matrix.env }}-pcre2 patch
+        msystem: ${{ matrix.msystem }}
         path-type: inherit
-    # - name: Add commit id into version
-    #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-    #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
     - name: Build
-      run: cd scripts && bash ./build.windows.release.sh
+      run: cd scripts && CC=clang.exe CXX=clang++ bash ./build.windows.release.sh
     - name: Upload
       uses: actions/upload-artifact@v1
       with:
-        name: subconverter_win32
+        name: subconverter_${{ matrix.name }}
         path: subconverter/
     - name: Package Release
       if: startsWith(github.ref, 'refs/tags/')
-      run: 7z a subconverter_win32.7z subconverter/
+      run: 7z a subconverter_${{ matrix.name }}.7z subconverter/
     - name: Draft Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: subconverter_win32.7z
+        files: subconverter_${{ matrix.name }}.7z
         draft: true
