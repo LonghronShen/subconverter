@@ -77,7 +77,7 @@ jobs:
           set -x
 
           apt update
-          apt install -y git build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev libpcre2-dev ninja-build
+          apt install -y git build-essential gcc-8 g++-8 g++-8-multilib libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev libpcre2-dev ninja-build
 
           python3 -m pip install --upgrade pip
           PIP_ONLY_BINARY=cmake python3 -m pip install cmake || true
@@ -101,6 +101,8 @@ jobs:
           uname -a
           echo ::set-output name=uname::$(uname -a)
           git config --global --add safe.directory '$(pwd)'
+          export CC=/usr/bin/gcc-8
+          export CXX=/usr/bin/g++-8
           bash ./scripts/build.sh
     - name: Upload
       uses: actions/upload-artifact@v1
