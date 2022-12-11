@@ -73,7 +73,7 @@ jobs:
         # no secrets are present in the container state or logs.
         install: |
           apt update
-          apt install -y git build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev
+          apt install -y git build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev ninja-build
           python3 -m pip install --upgrade pip
           PIP_ONLY_BINARY=cmake python3 -m pip install "cmake<3.23"
 
@@ -81,6 +81,7 @@ jobs:
         run: |
           uname -a
           echo ::set-output name=uname::$(uname -a)
+          git config --global --add safe.directory '$(pwd)'
           bash ./scripts/build.sh
     - name: Upload
       uses: actions/upload-artifact@v1
