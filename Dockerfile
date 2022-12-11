@@ -11,7 +11,7 @@ RUN apk add --no-cache --virtual .build-deps git make gcc g++ libevent-dev pcre2
 RUN echo "Build CMake from source ..." && \
     mkdir -p /tmp && \
     cd /tmp && \
-    git clone --depth=1 -b v3.25.1 https://github.com/Kitware/CMake.git && \
+    git clone --depth 1 --branch v3.25.1 https://github.com/Kitware/CMake.git && \
     cd CMake && \
     ./boostrap.sh --prefix=/usr/local && \
     make -j$(nproc) && \

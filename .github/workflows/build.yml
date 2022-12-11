@@ -84,15 +84,14 @@ jobs:
 
           hash cmake 2>/dev/null || {
               echo "Build CMake from source ..."
-              pushd /tmp
-              git clone --depth=1 -b v3.25.1 https://github.com/Kitware/CMake.git
-              pushd CMake
-              ./boostrap.sh --prefix=/usr/local
+              cd /tmp
+              git clone --depth 1 --branch https://github.com/Kitware/CMake.git CMake
+              cd CMake
+              bash ./boostrap.sh --prefix=/usr/local
               make -j$(nproc)
               make install
-              popd
+              cd ..
               rm -rf CMake
-              popd
           }
 
           cmake --version
