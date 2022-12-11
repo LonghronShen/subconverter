@@ -72,20 +72,30 @@ jobs:
         # publicly in your project's package repository, so it is vital that
         # no secrets are present in the container state or logs.
         install: |
+          #!/bin/bash
+
+          set -x
+
           apt update
           apt install -y git build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev libpcre2-dev ninja-build
+
           python3 -m pip install --upgrade pip
           PIP_ONLY_BINARY=cmake python3 -m pip install cmake
+
           if [ $? -ne 0 ]; then
               echo "Build CMake from source ..."
-              cd /tmp
+              pushd /tmp
               git clone --depth=1 -b v3.25.1 https://github.com/Kitware/CMake.git
-              cd CMake
+              pushd CMake
               ./boostrap.sh --prefix=/usr/local
               make -j$(nproc)
               make install
-              cmake --version
+              popd
+              rm -rf CMake
+              popd
           fi
+
+          cmake --version
 
         # Set an output parameter `uname` for use in subsequent steps
         run: |
