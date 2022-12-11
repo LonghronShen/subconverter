@@ -13,10 +13,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: x86
+          - arch: 386
+            name: x86
           - arch: amd64
+            name: amd64
           - arch: arm64
-          - arch: armv7
+            name: arm64
+          - arch: arm/v7
+            name: armv7
 
     steps:
       - name: Checkout base
@@ -86,7 +90,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: digest_${{ matrix.arch }}
+          name: digest_${{ matrix.name }}
           path: /tmp/digest.txt
 
   manifests:

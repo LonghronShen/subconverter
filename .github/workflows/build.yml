@@ -73,7 +73,7 @@ jobs:
         # no secrets are present in the container state or logs.
         install: |
           apt update
-          apt install -y build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev
+          apt install -y git build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev
           python3 -m pip install --upgrade pip
           PIP_ONLY_BINARY=cmake python3 -m pip install "cmake<3.23"
 
