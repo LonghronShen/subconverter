@@ -7,7 +7,7 @@ concurrency:
 
 jobs:
   linux_x86_build:
-    name: Linux x86_64 Build
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
     runs-on: ubuntu-latest
 
     # Run steps on a matrix of 3 arch/distro combinations
@@ -72,7 +72,9 @@ jobs:
         # publicly in your project's package repository, so it is vital that
         # no secrets are present in the container state or logs.
         install: |
-          bash ./scripts/bootstrap.sh
+          apt update
+          apt install -y build-essential libboost-all-dev python3-pip libevent-dev libcurl-dev
+          pip3 install cmake
 
         # Set an output parameter `uname` for use in subsequent steps
         run: |
@@ -118,14 +120,14 @@ jobs:
 
   windows_build:
     runs-on: windows-latest
-    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+    name: Build on msystem ${{ matrix.msystem }} ${{ matrix.env }}
 
     # Run steps on a matrix of 3 arch/distro combinations
     strategy:
       matrix:
         include:
-          - { msystem: CLANG64, env: x86_64, name: win64 }
-          - { msystem: CLANG32, env: i686, name: win32 }
+          - { msystem: CLANG64, env: clang-x86_64, name: win64 }
+          - { msystem: CLANG32, env: clang-i686, name: win32 }
 
     defaults:
       run:
