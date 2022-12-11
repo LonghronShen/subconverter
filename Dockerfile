@@ -6,9 +6,8 @@ LABEL maintainer "tindy.it@gmail.com"
 ARG THREADS="4"
 ARG SHA=""
 
-RUN apk add --no-cache --virtual .build-deps git make gcc g++ libevent-dev pcre2-dev boost-dev icu-dev openssl-dev curl-dev python3 Ninja
-
-RUN echo "Build CMake from source ..." && \
+RUN apk add --no-cache --virtual .build-deps git make gcc g++ libevent-dev pcre2-dev boost-dev icu-dev openssl-dev curl-dev python3 ninja && \
+    echo "Build CMake from source ..." && \
     mkdir -p /tmp && \
     cd /tmp && \
     git clone --depth 1 --branch v3.25.1 https://github.com/Kitware/CMake.git && \
