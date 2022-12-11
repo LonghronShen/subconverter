@@ -85,9 +85,9 @@ jobs:
           hash cmake 2>/dev/null || {
               echo "Build CMake from source ..."
               cd /tmp
-              git clone --depth 1 --branch https://github.com/Kitware/CMake.git CMake
+              git clone -b 'v3.25.1' --single-branch --depth 1 https://github.com/Kitware/CMake.git CMake
               cd CMake
-              bash ./boostrap.sh --prefix=/usr/local
+              ./bootstrap --prefix=/usr/local
               make -j$(nproc)
               make install
               cd ..

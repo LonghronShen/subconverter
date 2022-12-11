@@ -10,9 +10,9 @@ RUN apk add --no-cache --virtual .build-deps git make gcc g++ libevent-dev pcre2
     echo "Build CMake from source ..." && \
     mkdir -p /tmp && \
     cd /tmp && \
-    git clone --depth 1 --branch v3.25.1 https://github.com/Kitware/CMake.git && \
+    git clone -b 'v3.25.1' --single-branch --depth 1 https://github.com/Kitware/CMake.git CMake && \
     cd CMake && \
-    ./boostrap.sh --prefix=/usr/local && \
+    ./bootstrap --prefix=/usr/local && \
     make -j$(nproc) && \
     make install && \
     cd /tmp && \
