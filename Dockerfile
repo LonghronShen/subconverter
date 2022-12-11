@@ -6,17 +6,27 @@ LABEL maintainer "tindy.it@gmail.com"
 ARG THREADS="4"
 ARG SHA=""
 
-RUN apk add --no-cache --virtual .build-deps git make gcc g++ libevent-dev pcre2-dev boost-dev icu-dev openssl-dev curl-dev python3 ninja && \
-    echo "Build CMake from source ..." && \
-    mkdir -p /tmp && \
-    cd /tmp && \
-    git clone -b 'v3.25.1' --single-branch --depth 1 https://github.com/Kitware/CMake.git CMake && \
-    cd CMake && \
-    ./bootstrap --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make install && \
-    cd /tmp && \
-    rm -rf CMake
+RUN mkdir -p /tmp && echo  $'\n\
+    #!/bin/bash\n\
+    set -x\n\
+    python3 -m pip install --upgrade pip\n\
+    PIP_ONLY_BINARY=cmake python3 -m pip install cmake || true\n\
+    hash cmake 2>/dev/null || {\n\
+        echo "Build CMake from source ..."\n\
+        cd /tmp\n\
+        git clone -b \"v3.25.1\" --single-branch --depth 1 https://github.com/Kitware/CMake.git CMake\n\
+        cd CMake\n\
+        ./bootstrap --prefix=/usr/local\n\
+        make -j$(nproc)\n\
+        make install\n\
+        cd ..\n\
+        rm -rf CMake\n\
+    }\n\
+    cmake --version\n'\
+  > /tmp/install_cmake.sh
+
+RUN apk add --no-cache --virtual .build-deps bash git make gcc g++ libevent-dev pcre2-dev boost-dev icu-dev openssl-dev curl-dev python3 ninja && \
+    bash /tmp/install_cmake.sh
 
 WORKDIR /app
 
