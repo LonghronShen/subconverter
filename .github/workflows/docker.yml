@@ -14,13 +14,9 @@ jobs:
       matrix:
         include:
           - arch: x86
-            distro: x86-v3.10
           - arch: amd64
-            distro: amd64-v3.10
           - arch: arm64
-            distro: arm64-v3.10
           - arch: armv7
-            distro: armv7-v3.10
 
     steps:
       - name: Checkout base
@@ -51,8 +47,8 @@ jobs:
         if: github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v3
         with:
+          push: true
           platforms: linux/${{ matrix.arch }}
-          context: /
           tags: longhronshens/subconverter:latest
           build-args: |
             SHA=${{ steps.vars.outputs.sha_short }}
@@ -72,9 +68,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: docker/build-push-action@v3
         with:
+          push: true
           platforms: linux/${{ matrix.arch }}
-          context: /
           tags: longhronshens/subconverter:${{steps.version.outputs.result}}
+          build-args: |
+            SHA=${{ steps.version.outputs.result }}
           outputs: type=image,push=true
 
       - name: Save digest

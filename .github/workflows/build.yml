@@ -74,7 +74,8 @@ jobs:
         install: |
           apt update
           apt install -y build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev
-          pip3 install cmake
+          python3 -m pip install --upgrade pip
+          python3 -m pip install cmake
 
         # Set an output parameter `uname` for use in subsequent steps
         run: |
@@ -142,7 +143,7 @@ jobs:
         msystem: ${{ matrix.msystem }}
         path-type: inherit
     - name: Build
-      run: cd scripts && CC=mingw-w64-clang CXX=mingw-w64-clang++ bash ./build.windows.release.sh
+      run: cd scripts && bash ./build.windows.release.sh
     - name: Upload
       uses: actions/upload-artifact@v1
       with:
