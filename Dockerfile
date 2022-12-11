@@ -6,8 +6,7 @@ LABEL maintainer "tindy.it@gmail.com"
 ARG THREADS="4"
 ARG SHA=""
 
-RUN apk add --no-cache --virtual .build-deps git gcc g++ libevent-dev pcre2-dev boost-dev icu-dev openssl-dev curl-dev python3 ninja && \
-    python3 -m pip install --upgrade pip && PIP_ONLY_BINARY=cmake python3 -m pip install "cmake<3.23"
+RUN apk add --no-cache --virtual .build-deps git gcc g++ libevent-dev pcre2-dev boost-dev icu-dev openssl-dev curl-dev python3 ninja cmake
 
 WORKDIR /app
 
