@@ -75,7 +75,7 @@ jobs:
           apt update
           apt install -y build-essential libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev
           python3 -m pip install --upgrade pip
-          PIP_ONLY_BINARY=cmake python3 -m pip install cmake
+          PIP_ONLY_BINARY=cmake python3 -m pip install "cmake<3.23"
 
         # Set an output parameter `uname` for use in subsequent steps
         run: |
@@ -138,21 +138,17 @@ jobs:
     - uses: actions/checkout@v2
     - uses: msys2/setup-msys2@v2
       with:
-        # update: true
-        # install: base-devel git mingw-w64-${{ matrix.env }}-cmake mingw-w64-${{ matrix.env }}-libevent mingw-w64-${{ matrix.env }}-pcre2 patch
-        # msystem: ${{ matrix.msystem }}
-        # path-type: inherit
         update: true
         msystem: ${{matrix.msystem}}
         install: >-
           git
           make
-          mingw-w64-${{ matrix.env }}-libevent
-          mingw-w64-${{ matrix.env }}-pcre2
         pacboy: >-
           toolchain:p
           cmake:p
           ninja:p
+          libevent:p
+          pcre2:p
     - name: Build
       run: cd scripts && bash ./build.windows.release.sh
     - name: Upload
