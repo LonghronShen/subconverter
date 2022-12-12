@@ -63,7 +63,9 @@ if(NOT CXX17_FILESYSTEM AND NOT CXX17_FILESYSTEM_LIBFS)
     check_cxx_source_compiles("${FS_TESTCODE}" CXX11_EXP_FILESYSTEM_LIBFS)
   endif()
 
-  # toml11
+  include(FetchContent)
+
+  # ghc_filesystem
   FetchContent_Declare(ghc_filesystem
     GIT_REPOSITORY https://github.com/gulrak/filesystem.git
     GIT_TAG master)
