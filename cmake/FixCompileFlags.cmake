@@ -73,3 +73,13 @@ check_cxx_source_compiles("
     }" HAVE_TO_STRING)
 
 include(find_filesystem)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
+
+if(lto_supported)
+    message(STATUS "IPO / LTO enabled")
+    set(INTERPROCEDURAL_OPTIMIZATION TRUE)
+else()
+    message(STATUS "IPO / LTO not supported: <${lto_error}>")
+endif()
