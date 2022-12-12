@@ -70,6 +70,7 @@ target_include_directories(${BUILD_TARGET_NAME}-lib
     PUBLIC ${PCRE2_INCLUDE_DIR}
     PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib
 )
+
 target_link_libraries(${BUILD_TARGET_NAME}-lib
     PUBLIC ${CMAKE_THREAD_LIBS_INIT}
     PUBLIC ${CXX_FILESYSTEM_LIBS}
@@ -85,7 +86,8 @@ target_link_libraries(${BUILD_TARGET_NAME}-lib
     PUBLIC jpcre2
     # PUBLIC duktape
 )
-if(WIN32)
+
+if(WIN32 AND (NOT MINGW))
     target_link_libraries(${BUILD_TARGET_NAME} 
         PUBLIC wsock32
         PUBLIC ws2_32
