@@ -32,11 +32,11 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: ${{ github.ref }}-${{ github.sha }}
+          key: ${{ github.ref }}-${{ github.sha }}-${{ matrix.arch }}
           restore-keys: |
-            ${{ github.ref }}-${{ github.sha }}
-            ${{ github.ref }}
-            refs/head/main
+            ${{ github.ref }}-${{ github.sha }}-${{ matrix.arch }}
+            ${{ github.ref }}-${{ matrix.arch }}
+            refs/head/main-${{ matrix.arch }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -63,7 +63,7 @@ jobs:
         with:
           push: true
           platforms: linux/${{ matrix.arch }}
-          tags: longhronshens/subconverter:latest
+          tags: longhronshens/subconverter:${{ matrix.name }}-latest
           build-args: |
             SHA=${{ steps.vars.outputs.sha_short }}
           outputs: type=image,push=true
@@ -86,7 +86,7 @@ jobs:
         with:
           push: true
           platforms: linux/${{ matrix.arch }}
-          tags: longhronshens/subconverter:${{steps.version.outputs.result}}
+          tags: longhronshens/subconverter:${{ matrix.name }}-${{steps.version.outputs.result}}
           build-args: |
             SHA=${{ steps.version.outputs.result }}
           outputs: type=image,push=true

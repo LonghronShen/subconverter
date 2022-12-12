@@ -3,7 +3,6 @@ FROM alpine:3.10 AS build
 
 LABEL maintainer "tindy.it@gmail.com"
 
-ARG THREADS="4"
 ARG SHA=""
 
 RUN mkdir -p /tmp && echo  $'\n\
@@ -34,7 +33,7 @@ COPY . .
 
 RUN mkdir build && cd build && \
     cmake -G Ninja -DCMAKE_BUILD_TYPE=Release .. && \
-    cmake --build . -j $THREADS
+    cmake --build . -j $(nproc)
 
 FROM alpine:3.10 AS runtime
 
