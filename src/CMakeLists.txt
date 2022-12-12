@@ -40,6 +40,10 @@ target_compile_definitions(${BUILD_TARGET_NAME}-lib
     PRIVATE -DYAML_CPP_STATIC_DEFINE
 )
 
+if(USE_STD_REGEX)
+  target_compile_definitions(${BUILD_TARGET_NAME}-lib PUBLIC -DUSE_STD_REGEX)
+endif()
+
 if(HAVE_TO_STRING)
   target_compile_definitions(${BUILD_TARGET_NAME}-lib PUBLIC -DHAVE_TO_STRING)
 endif()

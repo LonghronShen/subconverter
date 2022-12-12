@@ -48,7 +48,8 @@ option(USING_MALLOC_TRIM "Call malloc_trim after processing request to lower mem
 option(USING_MBEDTLS "Use mbedTLS instead of OpenSSL for MD5 calculation." OFF)
 option(BUILD_STATIC_LIBRARY "Build a static library containing only the essential part." OFF)
 
+add_subdirectory(assets)
+
 include(external/InitializeExternalComponents.cmake)
 
-add_subdirectory(base)
 add_subdirectory(src)
