@@ -1,5 +1,5 @@
 file(GLOB_RECURSE res_files CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_LIST_DIR}/configuration/*
+    "${CMAKE_CURRENT_LIST_DIR}/configuration/*"
 )
 
 foreach(res IN ITEMS ${res_files})
