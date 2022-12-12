@@ -77,7 +77,9 @@ jobs:
           set -x
 
           apt update
-          apt install -y git build-essential gcc-8 g++-8 libboost-all-dev python3-pip libevent-dev libcurl4-openssl-dev libpcre2-dev ninja-build pkg-config
+          apt install -y git build-essential gcc-8 g++-8 libboost-all-dev \
+            python3-pip libevent-dev libssl-dev libcrypto-dev \
+            libcurl4-openssl-dev libpcre2-dev ninja-build pkg-config
 
           python3 -m pip install --upgrade pip
           PIP_ONLY_BINARY=cmake python3 -m pip install cmake || true
