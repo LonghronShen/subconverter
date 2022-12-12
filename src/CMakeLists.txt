@@ -60,7 +60,6 @@ else()
     target_link_libraries(${BUILD_TARGET_NAME}-lib
         PUBLIC event_core_static
         PUBLIC event_extra_static
-        PUBLIC event_pthreads_static
         PUBLIC event_openssl_static
     )
 endif()
