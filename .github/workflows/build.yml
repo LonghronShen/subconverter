@@ -98,9 +98,16 @@ jobs:
 
         # Set an output parameter `uname` for use in subsequent steps
         run: |
+          #!/bin/bash
+
+          set -x
+
           uname -a
+
           echo ::set-output name=uname::$(uname -a)
-          git config --global --add safe.directory '$(pwd)'
+
+          git config --global --add safe.directory '*'
+
           export CC=/usr/bin/gcc-8
           export CXX=/usr/bin/g++-8
           bash ./scripts/build.sh
