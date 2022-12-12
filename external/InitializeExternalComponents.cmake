@@ -111,7 +111,7 @@ endif()
 
 
 # libevent
-# find_package(LibEvent QUIET)
+find_package(LibEvent QUIET)
 if(LibEvent_FOUND)
     message(STATUS "Using system libevent: ${LIBEVENT_LIB}")
 else()
