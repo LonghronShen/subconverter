@@ -28,6 +28,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ github.ref }}-${{ github.sha }}
+            ${{ github.ref }}
+            refs/head/main
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
@@ -57,6 +67,8 @@ jobs:
           build-args: |
             SHA=${{ steps.vars.outputs.sha_short }}
           outputs: type=image,push=true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
 
       - name: Replace tag without `v`
         if: startsWith(github.ref, 'refs/tags/')
@@ -78,6 +90,8 @@ jobs:
           build-args: |
             SHA=${{ steps.version.outputs.result }}
           outputs: type=image,push=true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
 
       - name: Save digest
         if: github.ref == 'refs/heads/master'
