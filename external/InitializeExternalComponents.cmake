@@ -111,7 +111,7 @@ endif()
 
 
 # libevent
-find_package(LibEvent QUIET)
+# find_package(LibEvent QUIET)
 if(LibEvent_FOUND)
     message(STATUS "Using system libevent: ${LIBEVENT_LIB}")
 else()
@@ -119,7 +119,7 @@ else()
   set(EVENT_LIBRARY_STATIC ON CACHE BOOL "EVENT_LIBRARY_STATIC" FORCE)
   FetchContent_Declare(libevent
       GIT_REPOSITORY https://github.com/libevent/libevent.git
-      GIT_TAG dfbb004a4ae0bbf225173854ca71ec0ea761cd9c)
+      GIT_TAG 02428d9a2d89ee0a595166909dd6d75b5beb777b)
 
   FetchContent_GetProperties(libevent)
   if(NOT libevent_POPULATED)
