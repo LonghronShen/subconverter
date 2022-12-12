@@ -181,7 +181,7 @@ jobs:
         fetch-depth: 0
     - uses: msys2/setup-msys2@v2
       with:
-        update: true
+        update: false
         msystem: ${{matrix.msystem}}
         install: >-
           git
