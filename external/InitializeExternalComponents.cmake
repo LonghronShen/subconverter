@@ -3,10 +3,14 @@ find_package(PkgConfig REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-find_package(LibEvent REQUIRED)
-
 if(NOT USING_STD_REGEX)
-  find_package(PCRE2 REQUIRED)
+  find_package(PCRE2 QUIET)
+  if(PCRE2_FOUND)
+    message(STATUS "Using system PCRE2: ${PCRE2_LIBRARY}")
+  else()
+    message(STATUS "Using system PCRE2: NOT_FOUND, using std::regex instead.")
+    set(USING_STD_REGEX ON CACHE STRING "USING_STD_REGEX" FORCE)
+  endif()
 endif()
 
 if(UNIX)
@@ -104,6 +108,28 @@ else()
       add_subdirectory(${curl_SOURCE_DIR} ${curl_BINARY_DIR} EXCLUDE_FROM_ALL)
   endif()
 endif()
+
+
+# libevent
+find_package(LibEvent QUIET)
+if(LibEvent_FOUND)
+    message(STATUS "Using system libevent: ${LIBEVENT_LIB}")
+else()
+  set(EVENT__DISABLE_MBEDTLS ON CACHE BOOL "EVENT__DISABLE_MBEDTLS" FORCE)
+  set(EVENT_LIBRARY_STATIC ON CACHE BOOL "EVENT_LIBRARY_STATIC" FORCE)
+  FetchContent_Declare(libevent
+      GIT_REPOSITORY https://github.com/libevent/libevent.git
+      GIT_TAG dfbb004a4ae0bbf225173854ca71ec0ea761cd9c)
+
+  FetchContent_GetProperties(libevent)
+  if(NOT libevent_POPULATED)
+      FetchContent_Populate(libevent)
+      add_subdirectory(${libevent_SOURCE_DIR} ${libevent_BINARY_DIR} EXCLUDE_FROM_ALL)
+      set(LIBEVENT_LIB "event_core_static;event_pthreads_static")
+      set(LIBEVENT_INCLUDE_DIR "${libevent_SOURCE_DIR}/include")
+  endif()
+endif()
+
 
 # nlohmann_json
 FetchContent_Declare(json

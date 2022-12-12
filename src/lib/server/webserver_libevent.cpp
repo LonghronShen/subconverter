@@ -191,7 +191,7 @@ void WebServer::on_request(evhttp_request *req, void *args)
 
     char *client_ip;
     u_short client_port;
-    evhttp_connection_get_peer(evhttp_request_get_connection(req), &client_ip, &client_port);
+    evhttp_connection_get_peer(evhttp_request_get_connection(req), (const char **)&client_ip, &client_port);
     //std::cerr<<"Accept connection from client "<<client_ip<<":"<<client_port<<"\n";
     writeLog(0, "Accept connection from client " + std::string(client_ip) + ":" + std::to_string(client_port), LOG_LEVEL_DEBUG);
 

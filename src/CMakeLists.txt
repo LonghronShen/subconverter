@@ -48,16 +48,31 @@ if(USING_MALLOC_TRIM)
   target_compile_definitions(${BUILD_TARGET_NAME}-lib PUBLIC -DMALLOC_TRIM)
 endif()
 
+if(LibEvent_FOUND)
+    target_link_libraries(${BUILD_TARGET_NAME}-lib
+        PUBLIC ${LIBEVENT_LIB}
+    )
+else()
+    target_link_libraries(${BUILD_TARGET_NAME}-lib
+        PUBLIC event_core_static
+        PUBLIC event_extra_static
+        PUBLIC event_pthreads_static
+        PUBLIC event_openssl_static
+    )
+endif()
+
+target_include_directories(${BUILD_TARGET_NAME}-lib BEFORE
+    PUBLIC ${LIBEVENT_INCLUDE_DIR}
+)
+
 target_include_directories(${BUILD_TARGET_NAME}-lib
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
-    PUBLIC ${LIBEVENT_INCLUDE_DIR}
     PUBLIC ${PCRE2_INCLUDE_DIR}
     PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib
 )
 target_link_libraries(${BUILD_TARGET_NAME}-lib
     PUBLIC ${CMAKE_THREAD_LIBS_INIT}
     PUBLIC ${CXX_FILESYSTEM_LIBS}
-    PUBLIC ${LIBEVENT_LIB}
     PUBLIC ${PCRE2_LIBRARY}
     PUBLIC CURL::libcurl
     # PUBLIC Rapidjson

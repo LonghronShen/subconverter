@@ -20,7 +20,10 @@ jobs:
             distro: amd64-v3.10
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: Build
       run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:${{ matrix.distro }} /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
     - name: Upload
@@ -53,7 +56,10 @@ jobs:
             distro: ubuntu20.04
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - uses: uraimo/run-on-arch-action@v2
       name: Run commands
       id: runcmd
@@ -132,7 +138,10 @@ jobs:
     name: macOS Build
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: Build
       run: cd scripts && ./build.macos.release.sh
     - name: Upload
@@ -166,7 +175,10 @@ jobs:
         shell: msys2 {0}
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - uses: msys2/setup-msys2@v2
       with:
         update: true
