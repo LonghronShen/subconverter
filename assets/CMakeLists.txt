@@ -4,7 +4,7 @@ file(GLOB_RECURSE res_files CONFIGURE_DEPENDS
 
 foreach(res IN ITEMS ${res_files})
     file(RELATIVE_PATH buildDirRelFilePath "${CMAKE_CURRENT_LIST_DIR}/configuration" "${res}")
-    message(STATUS "Copying \"${buildDirRelFilePath}\" to \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\" ...")
+    message(STATUS "Copying \"${res}\" to \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${buildDirRelFilePath}\" ...")
     if(EXISTS "${res}")
         configure_file("${res}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${buildDirRelFilePath}" COPYONLY)
     endif()
