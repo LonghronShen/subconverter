@@ -192,6 +192,7 @@ jobs:
           ninja:p
           libevent:p
           pcre2:p
+          boost:p
     - name: Build
       run: cd scripts && bash ./build.windows.release.sh
     - name: Upload
