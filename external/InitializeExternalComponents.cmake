@@ -170,7 +170,7 @@ set(JINJA2_PRIVATE_LIBS_INT "" CACHE STRING "JINJA2_PRIVATE_LIBS_INT" FORCE)
 FetchContent_Declare(jinja2cpp
   GIT_REPOSITORY https://github.com/jinja2cpp/Jinja2Cpp.git
   GIT_SUBMODULES "thirdparty/gtest;thirdparty/fmtlib;thirdparty/nonstd/expected-lite;thirdparty/nonstd/optional-lite;thirdparty/nonstd/string-view-lite;thirdparty/nonstd/variant-lite"
-  GIT_TAG master)
+  GIT_TAG 1dacf16a1f6e216f5dcb7e7b8ef9626634c29cf9)
 
 FetchContent_GetProperties(jinja2cpp)
 if(NOT jinja2cpp_POPULATED)
