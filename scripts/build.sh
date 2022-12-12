@@ -12,7 +12,7 @@ cd "$SCRIPTPATH/.."
 mkdir -p build
 
 pushd build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+cmake --compile-no-warning-as-error -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 cmake --build . -j $THREADS
 pushd bin
 chmod +rx subconverter

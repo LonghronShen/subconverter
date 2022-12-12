@@ -5,22 +5,35 @@
 
 include(CMakePushCheckState)
 
-set(FS_TESTCODE
-    "
-#if defined(CXX17_FILESYSTEM) || defined (CXX17_FILESYSTEM_LIBFS)
-#include <filesystem>
-#elif defined(CXX11_EXP_FILESYSTEM) || defined (CXX11_EXP_FILESYSTEM_LIBFS)
-#include <experimental/filesystem>
-namespace std {
-	namespace filesystem {
-		using experimental::filesystem::is_regular_file;
-	}
-}
-#endif
-int main(void)
-{
-	return std::filesystem::is_regular_file(\"/\") ? 0 : 1;
-}
+set(FS_TESTCODE "
+  #if defined(CXX17_FILESYSTEM) || defined (CXX17_FILESYSTEM_LIBFS)
+  #include <filesystem>
+  #elif defined(CXX11_EXP_FILESYSTEM) || defined (CXX11_EXP_FILESYSTEM_LIBFS)
+  #include <experimental/filesystem>
+  namespace std {
+    namespace filesystem {
+      using experimental::filesystem::is_regular_file;
+    }
+  }
+  #endif
+
+  #ifdef __APPLE__
+  #include <Availability.h> // for deployment target to support pre-catalina targets without std::fs 
+  #endif
+  #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
+  #if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
+  #define GHC_USE_STD_FS
+  namespace fs = std::filesystem;
+  #endif
+  #endif
+  #ifndef GHC_USE_STD_FS
+  #include <ghc/filesystem.hpp>
+  namespace fs = ghc::filesystem;
+  #endif
+
+  int main(void) {
+    return fs::is_regular_file(\"/\") ? 0 : 1;
+  }
 ")
 
 if(CMAKE_CXX_STANDARD LESS 17)
@@ -49,8 +62,20 @@ if(NOT CXX17_FILESYSTEM AND NOT CXX17_FILESYSTEM_LIBFS)
     set(CMAKE_REQUIRED_LIBRARIES stdc++fs)
     check_cxx_source_compiles("${FS_TESTCODE}" CXX11_EXP_FILESYSTEM_LIBFS)
   endif()
+
+  # toml11
+  FetchContent_Declare(ghc_filesystem
+    GIT_REPOSITORY https://github.com/gulrak/filesystem.git
+    GIT_TAG master)
+
+  FetchContent_GetProperties(ghc_filesystem)
+  if(NOT ghc_filesystem_POPULATED)
+    FetchContent_Populate(ghc_filesystem)
+    include_directories(${ghc_filesystem_SOURCE_DIR}/include)
+  endif()
+
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/filesystem.hxx.in"
-                 "${CMAKE_CURRENT_BINARY_DIR}/filesystem" @ONLY)
+                 "${CMAKE_BINARY_DIR}/filesystem" @ONLY)
 endif()
 cmake_pop_check_state()
 
