@@ -97,13 +97,11 @@ if(WIN32 AND (NOT MINGW))
     )
 endif()
 
-if(CMAKE_C_COMPILER_RANLIB)
-    add_library(${BUILD_TARGET_NAME}-shared SHARED ${CMAKE_CURRENT_LIST_DIR}/lib/wrapper.cpp)
-    target_link_libraries(${BUILD_TARGET_NAME}-shared
-        PUBLIC ${BUILD_TARGET_NAME}-lib
-    )
-    target_compile_definitions(${BUILD_TARGET_NAME}-shared PRIVATE SUBCONVERTER_SHARED_LIB)
-endif()
+add_library(${BUILD_TARGET_NAME}-shared SHARED ${CMAKE_CURRENT_LIST_DIR}/lib/wrapper.cpp)
+target_link_libraries(${BUILD_TARGET_NAME}-shared
+    PUBLIC ${BUILD_TARGET_NAME}-lib
+)
+target_compile_definitions(${BUILD_TARGET_NAME}-shared PRIVATE SUBCONVERTER_SHARED_LIB)
 
 add_executable(${BUILD_TARGET_NAME} ${CMAKE_CURRENT_LIST_DIR}/exe/main.cpp)
 target_link_libraries(${BUILD_TARGET_NAME}
