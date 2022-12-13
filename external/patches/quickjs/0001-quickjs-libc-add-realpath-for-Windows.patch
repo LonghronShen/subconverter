@@ -6,7 +6,7 @@ index f0c61be..7d592d1 100644
  static uint64_t os_pending_signals;
  static int (*os_poll_func)(JSContext *ctx);
  
-+#if defined(_MSC_VER)
++#if defined(_WIN32)
 +static char *realpath(const char *path, char *buf)
 +{
 +    if (!_fullpath(buf, path, PATH_MAX)) {
