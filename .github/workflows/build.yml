@@ -186,6 +186,7 @@ jobs:
         install: >-
           git
           make
+          patch
         pacboy: >-
           toolchain:p
           cmake:p
