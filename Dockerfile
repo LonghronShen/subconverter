@@ -23,7 +23,7 @@ RUN mkdir -p /tmp && echo  $'\n\
     cmake --version\n'\
   > /tmp/install_cmake.sh
 
-RUN apk add --no-cache --virtual .build-deps bash git make gcc g++ libevent-dev pcre2-dev boost-dev icu-dev openssl-dev curl-dev python3 ninja && \
+RUN apk add --no-cache --virtual .build-deps bash git make gcc g++ libevent-dev pcre2-dev boost-dev icu-dev openssl-dev curl-dev python3 ninja patch && \
     bash /tmp/install_cmake.sh
 
 WORKDIR /app
