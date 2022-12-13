@@ -1,8 +1,8 @@
 import glob
 import os, sys
 
-MAIN_IMAGE_NAME="longhronshens/subconverter"
-TARGET_TAG="latest" if len(sys.argv) < 2 else sys.argv[1]
+MAIN_IMAGE_NAME=sys.argv[1]
+TARGET_TAG="latest" if len(sys.argv) < 3 else sys.argv[2]
 
 args=["docker manifest create {}:{}".format(MAIN_IMAGE_NAME, TARGET_TAG)]
 for i in glob.glob("/tmp/images/*/*.txt"):

@@ -1,4 +1,3 @@
-# FROM n0madic/alpine-gcc:8.4.0 AS build
 FROM alpine:3.10 AS build
 
 LABEL maintainer "tindy.it@gmail.com"
@@ -37,13 +36,13 @@ RUN mkdir build && cd build && \
 
 FROM alpine:3.10 AS runtime
 
-RUN apk add --no-cache boost libevent icu pcre2 libcurl
+RUN apk add --no-cache boost libevent icu pcre2 libcurl libstdc++ libgcc
 
 # set entry
 WORKDIR /base
 
 COPY --from=build /app/build/bin /base
 
-RUN echo "/base" >> /etc/ld-musl-x86_64.path
+# RUN echo "/base" >> /etc/ld-musl-x86_64.path
 
 CMD subconverter
