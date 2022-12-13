@@ -32,11 +32,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: ${{ github.ref }}-${{ github.sha }}-${{ matrix.arch }}
+          key: ${{ github.ref }}-${{ matrix.arch }}
           restore-keys: |
-            ${{ github.ref }}-${{ github.sha }}-${{ matrix.arch }}
             ${{ github.ref }}-${{ matrix.arch }}
-            refs/head/main-${{ matrix.arch }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
