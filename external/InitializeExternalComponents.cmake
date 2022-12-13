@@ -20,6 +20,7 @@ endif()
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE STRING "FETCHCONTENT_UPDATES_DISCONNECTED" FORCE)
 
 include(FetchContent)
+include(Patch)
 
 # boost-cmake
 if(WIN32)
@@ -170,6 +171,16 @@ FetchContent_Declare(quickjs
 FetchContent_GetProperties(quickjs)
 if(NOT quickjs_POPULATED)
   FetchContent_Populate(quickjs)
+
+  file(GLOB quickjs_patches
+    "${CMAKE_CURRENT_LIST_DIR}/patches/quickjs/*.patch"
+  )
+
+  foreach(patch_file IN ITEMS ${quickjs_patches})
+    message(STATUS "Applying patch for quickjs: ${patch_file}")
+    patch_directory("${quickjs_SOURCE_DIR}" "${patch_file}")
+  endforeach()
+
   add_subdirectory(${quickjs_SOURCE_DIR} ${quickjs_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
