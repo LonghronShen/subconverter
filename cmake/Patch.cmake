@@ -20,15 +20,18 @@ if(NOT PATCH_EXECUTABLE)
 endif()
 
 function(patch_directory dir_to_patch patch_file)
-    execute_process(COMMAND ${PATCH_EXECUTABLE} -s -p1
+    execute_process(COMMAND ${PATCH_EXECUTABLE} -s -p1 --forward
         INPUT_FILE "${patch_file}"
         WORKING_DIRECTORY "${dir_to_patch}"
         TIMEOUT 15
         COMMAND_ECHO STDOUT
+        OUTPUT_VARIABLE patch_stdout
         RESULT_VARIABLE patch_ret
     )
 
     if(NOT (patch_ret EQUAL 0))
-        message(FATAL_ERROR "Failed to apply patch \"${dir_to_patch}\" using \"${patch_file}\" with \"${PATCH_EXECUTABLE}\"")
+        if(NOT ("${patch_stdout}" MATCHES "Skipping patch"))
+            message(FATAL_ERROR "Failed to apply patch \"${dir_to_patch}\" using \"${patch_file}\" with \"${PATCH_EXECUTABLE}\"")
+        endif()
     endif()
 endfunction()
