@@ -6,7 +6,7 @@ index f0c61be..b8de9c1 100644
  }
  #endif /* !_WIN32 */
  
-+#if defined(_WIN32) && !defined(realpath)
++#if defined(_MSC_VER)
 +static char *realpath(const char *path, char *buf)
 +{
 +    if (!_fullpath(buf, path, PATH_MAX)) {
