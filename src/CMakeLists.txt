@@ -109,5 +109,9 @@ target_link_libraries(${BUILD_TARGET_NAME}
 )
 
 if(MINGW)
-    mingw_bundle_dll(${BUILD_TARGET_NAME})
+    # mingw_bundle_dll(${BUILD_TARGET_NAME})
+    add_custom_command(TARGET ${BUILD_TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_RUNTIME_DLLS:${BUILD_TARGET_NAME}>" "$<TARGET_FILE_DIR:${BUILD_TARGET_NAME}>"
+        COMMAND_EXPAND_LISTS
+    )
 endif()
