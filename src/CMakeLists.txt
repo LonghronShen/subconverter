@@ -107,3 +107,7 @@ add_executable(${BUILD_TARGET_NAME} ${CMAKE_CURRENT_LIST_DIR}/exe/main.cpp)
 target_link_libraries(${BUILD_TARGET_NAME}
     PUBLIC ${BUILD_TARGET_NAME}-lib
 )
+
+if(MINGW)
+    mingw_bundle_dll(${BUILD_TARGET_NAME})
+endif()
