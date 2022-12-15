@@ -1,4 +1,5 @@
 find_package(PkgConfig REQUIRED)
+find_package(Python3 REQUIRED)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -303,5 +304,26 @@ if(NOT duktape_POPULATED)
         PUBLIC m
         PUBLIC dl
         PUBLIC rt)
+  endif()
+endif()
+
+if(MINGW)
+  # mingw-bundledlls
+  FetchContent_Declare(mingw_bundledlls
+    GIT_REPOSITORY https://github.com/LonghronShen/mingw-bundledlls.git
+    GIT_TAG master)
+
+  FetchContent_GetProperties(mingw_bundledlls)
+  if(NOT mingw_bundledlls_POPULATED)
+    FetchContent_Populate(mingw_bundledlls)
+    function(mingw_bundle_dll target_name)
+      add_custom_target(${target_name}-deps ALL
+          COMMAND "${Python3_EXECUTABLE}" "${mingw_bundledlls_SOURCE_DIR}/mingw-bundledlls" -l "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/dependencies.log" --copy "$<TARGET_FILE:${target_name}>"
+          WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
+          DEPENDS ${target_name}
+          COMMENT "Copying MinGW libs ..."
+          VERBATIM
+      )
+    endfunction()
   endif()
 endif()

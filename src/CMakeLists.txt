@@ -107,3 +107,11 @@ add_executable(${BUILD_TARGET_NAME} ${CMAKE_CURRENT_LIST_DIR}/exe/main.cpp)
 target_link_libraries(${BUILD_TARGET_NAME}
     PUBLIC ${BUILD_TARGET_NAME}-lib
 )
+
+if(MINGW)
+    mingw_bundle_dll(${BUILD_TARGET_NAME})
+    # add_custom_command(TARGET ${BUILD_TARGET_NAME} POST_BUILD
+    #     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_RUNTIME_DLLS:${BUILD_TARGET_NAME}>" "$<TARGET_FILE_DIR:${BUILD_TARGET_NAME}>"
+    #     COMMAND_EXPAND_LISTS
+    # )
+endif()

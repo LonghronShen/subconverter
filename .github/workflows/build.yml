@@ -187,6 +187,7 @@ jobs:
           git
           make
           patch
+          binutils
         pacboy: >-
           toolchain:p
           cmake:p
