@@ -91,7 +91,7 @@ target_link_libraries(${BUILD_TARGET_NAME}-lib
 )
 
 if(WIN32 AND (NOT MINGW))
-    target_link_libraries(${BUILD_TARGET_NAME} 
+    target_link_libraries(${BUILD_TARGET_NAME}-lib
         PUBLIC wsock32
         PUBLIC ws2_32
     )
