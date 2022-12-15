@@ -214,15 +214,25 @@ if(NOT rapidjson_POPULATED)
 endif()
 
 
-# quickjspp
-FetchContent_Declare(quickjspp
-  GIT_REPOSITORY https://github.com/LonghronShen/quickjspp.git
+# quickjs
+FetchContent_Declare(quickjs
+  GIT_REPOSITORY https://github.com/ftk/quickjspp.git
   GIT_TAG master)
 
-FetchContent_GetProperties(quickjspp)
-if(NOT quickjspp_POPULATED)
-  FetchContent_Populate(quickjspp)
-  add_subdirectory(${quickjspp_SOURCE_DIR} ${quickjspp_BINARY_DIR} EXCLUDE_FROM_ALL)
+FetchContent_GetProperties(quickjs)
+if(NOT quickjs_POPULATED)
+  FetchContent_Populate(quickjs)
+
+  file(GLOB quickjs_patches
+    "${CMAKE_CURRENT_LIST_DIR}/patches/quickjs/*.patch"
+  )
+
+  foreach(patch_file IN ITEMS ${quickjs_patches})
+    message(STATUS "Applying patch for quickjs: ${patch_file}")
+    patch_directory("${quickjs_SOURCE_DIR}" "${patch_file}")
+  endforeach()
+
+  add_subdirectory(${quickjs_SOURCE_DIR} ${quickjs_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
 
