@@ -1,17 +1,25 @@
-find_package(PkgConfig REQUIRED)
-find_package(Python3 REQUIRED)
+find_package(PkgConfig QUIET)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 if(NOT USING_STD_REGEX)
-  find_package(PCRE2 QUIET)
-  if(PCRE2_FOUND)
-    message(STATUS "Using system PCRE2: ${PCRE2_LIBRARY}")
-  else()
-    message(STATUS "Using system PCRE2: NOT_FOUND, using std::regex instead.")
-    set(USING_STD_REGEX ON CACHE STRING "USING_STD_REGEX" FORCE)
-  endif()
+    find_package(PCRE2 QUIET)
+    if(PCRE2_FOUND)
+        message(STATUS "Using system PCRE2: ${PCRE2_LIBRARY}")
+    else()
+        set(PCRE2_CODE_UNIT_WIDTH_USED "8" CACHE INTERNAL "PCRE2_CODE_UNIT_WIDTH_USED")
+        pkg_check_modules(PCRE2 libpcre2-8)
+        if(PCRE2_FOUND)
+            set(PCRE2_LIBRARY ${PC_PCRE2_LINK_LIBRARIES})
+            set(PCRE2_LIBRARIES ${PC_PCRE2_LINK_LIBRARIES})
+            set(PCRE2_INCLUDE_DIRS ${PC_PCRE2_INCLUDE_DIRS})
+            message(STATUS "Using system PCRE2: ${PCRE2_LIBRARIES}")
+        else()
+            message(STATUS "Using system PCRE2: NOT_FOUND, using std::regex instead.")
+            set(USING_STD_REGEX ON CACHE STRING "USING_STD_REGEX" FORCE)
+        endif()
+    endif()
 endif()
 
 if(UNIX)
@@ -22,6 +30,43 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE STRING "FETCHCONTENT_UPDATES_DISC
 
 include(FetchContent)
 include(Patch)
+
+if(MSVC)
+  # sys_time_h
+  FetchContent_Declare(sys_time_h
+      GIT_REPOSITORY https://github.com/win32ports/sys_time_h.git
+      GIT_TAG master)
+
+  FetchContent_GetProperties(sys_time_h)
+  if(NOT sys_time_h_POPULATED)
+      FetchContent_Populate(sys_time_h)
+      include_directories(SYSTEM ${sys_time_h_SOURCE_DIR})
+  endif()
+
+
+  # unistd_h
+  FetchContent_Declare(unistd_h
+      GIT_REPOSITORY https://github.com/win32ports/unistd_h.git
+      GIT_TAG master)
+
+  FetchContent_GetProperties(unistd_h)
+  if(NOT unistd_h_POPULATED)
+      FetchContent_Populate(unistd_h)
+      include_directories(SYSTEM ${unistd_h_SOURCE_DIR})
+  endif()
+
+
+  # dirent_h
+  FetchContent_Declare(dirent_h
+      GIT_REPOSITORY https://github.com/win32ports/dirent_h.git
+      GIT_TAG master)
+
+  FetchContent_GetProperties(dirent_h)
+  if(NOT dirent_h_POPULATED)
+      FetchContent_Populate(dirent_h)
+      include_directories(SYSTEM ${dirent_h_SOURCE_DIR})
+  endif()
+endif()
 
 # boost-cmake
 if(WIN32)
@@ -61,12 +106,17 @@ if(ZLIB_FOUND)
     message(STATUS "Using system zlib: ${ZLIB_INCLUDE_DIRS}")
     include_directories(BEFORE SYSTEM ${ZLIB_INCLUDE_DIRS})
 else()
-    add_subdirectory(external/zlib)
-    message(STATUS "Using local zlib: ${CMAKE_CURRENT_LIST_DIR}/zlib")
-    include_directories(
-        "${CMAKE_CURRENT_LIST_DIR}/zlib"
-        "${zlib_BINARY_DIR}/")
-    set(ZLIB_LIBRARIES zlibstatic CACHE STRING "ZLIB_LIBRARIES" FORCE)
+    FetchContent_Declare(zlib
+      GIT_REPOSITORY https://github.com/madler/zlib.git
+      GIT_TAG master)
+
+    FetchContent_GetProperties(zlib)
+    if(NOT zlib_POPULATED)
+        FetchContent_Populate(zlib)
+        add_subdirectory(${zlib_SOURCE_DIR} ${zlib_BINARY_DIR} EXCLUDE_FROM_ALL)
+        set(ZLIB_LIBRARY zlibstatic CACHE STRING "ZLIB_LIBRARY" FORCE)
+        set(ZLIB_INCLUDE_DIR "${zlib_SOURCE_DIR}" CACHE STRING "ZLIB_INCLUDE_DIR" FORCE)
+    endif()
 endif()
 
 
@@ -164,25 +214,15 @@ if(NOT rapidjson_POPULATED)
 endif()
 
 
-# quickjs
-FetchContent_Declare(quickjs
-  GIT_REPOSITORY https://github.com/ftk/quickjspp.git
+# quickjspp
+FetchContent_Declare(quickjspp
+  GIT_REPOSITORY https://github.com/LonghronShen/quickjspp.git
   GIT_TAG master)
 
-FetchContent_GetProperties(quickjs)
-if(NOT quickjs_POPULATED)
-  FetchContent_Populate(quickjs)
-
-  file(GLOB quickjs_patches
-    "${CMAKE_CURRENT_LIST_DIR}/patches/quickjs/*.patch"
-  )
-
-  foreach(patch_file IN ITEMS ${quickjs_patches})
-    message(STATUS "Applying patch for quickjs: ${patch_file}")
-    patch_directory("${quickjs_SOURCE_DIR}" "${patch_file}")
-  endforeach()
-
-  add_subdirectory(${quickjs_SOURCE_DIR} ${quickjs_BINARY_DIR} EXCLUDE_FROM_ALL)
+FetchContent_GetProperties(quickjspp)
+if(NOT quickjspp_POPULATED)
+  FetchContent_Populate(quickjspp)
+  add_subdirectory(${quickjspp_SOURCE_DIR} ${quickjspp_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
 
@@ -316,6 +356,9 @@ if(MINGW)
   FetchContent_GetProperties(mingw_bundledlls)
   if(NOT mingw_bundledlls_POPULATED)
     FetchContent_Populate(mingw_bundledlls)
+
+    find_package(Python3 REQUIRED)
+
     function(mingw_bundle_dll target_name)
       add_custom_target(${target_name}-deps ALL
           COMMAND "${Python3_EXECUTABLE}" "${mingw_bundledlls_SOURCE_DIR}/mingw-bundledlls" -l "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/dependencies.log" --copy "$<TARGET_FILE:${target_name}>"
