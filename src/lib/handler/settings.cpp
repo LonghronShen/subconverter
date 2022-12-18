@@ -2,13 +2,13 @@
 #include <mutex>
 #include <toml.hpp>
 
+#include "interfaces.h"
 #include "../config/binding.h"
 #include "../handler/webget.h"
 #include "../script/cron.h"
 #include "../server/webserver.h"
 #include "../utils/logger.h"
 #include "../utils/network.h"
-#include "interfaces.h"
 #include "multithread.h"
 #include "settings.h"
 

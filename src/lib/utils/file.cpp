@@ -1,5 +1,7 @@
 #include <string>
 #include <fstream>
+#include <filesystem>
+
 #include <sys/stat.h>
 
 #include "string.h"
@@ -61,12 +63,15 @@ std::string fileGet(const std::string &path, bool scope_limit)
 
 bool fileExist(const std::string &path, bool scope_limit)
 {
+#if defined(_MSC_VER)
     //using c++17 standard, but may cause problem on clang
-    //return std::filesystem::exists(path);
+    return std::filesystem::exists(path);
+#else
     if(scope_limit && !isInScope(path))
         return false;
     struct stat st;
     return stat(path.data(), &st) == 0 && S_ISREG(st.st_mode);
+#endif
 }
 #endif
 

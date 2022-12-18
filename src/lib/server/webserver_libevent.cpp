@@ -12,9 +12,10 @@
 #include <map>
 #include <algorithm>
 #include <string.h>
-#include <pthread.h>
 #include <thread>
 #include <functional>
+
+#include <pthread.h>
 
 #include "../utils/base64/base64.h"
 #include "../utils/file_extra.h"
@@ -390,8 +391,8 @@ int WebServer::start_web_server_multi(void *argv)
     if (nfd < 0)
         return -1;
 
-    pthread_t ths[nthreads];
-    struct event_base *base[nthreads];
+    std::vector<pthread_t> ths(nthreads);
+    std::vector<struct event_base *> base(nthreads);
     for (int i = 0; i < nthreads; i++)
     {
         base[i] = event_init();

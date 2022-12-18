@@ -56,17 +56,16 @@ if(LibEvent_FOUND)
     target_link_libraries(${BUILD_TARGET_NAME}-lib
         PUBLIC ${LIBEVENT_LIB}
     )
+    target_include_directories(${BUILD_TARGET_NAME}-lib BEFORE
+        PUBLIC ${LIBEVENT_INCLUDE_DIR}
+    )
 else()
     target_link_libraries(${BUILD_TARGET_NAME}-lib
-        PUBLIC event_core_static
-        PUBLIC event_extra_static
-        PUBLIC event_openssl_static
+        PUBLIC event_core
+        PUBLIC event_extra
+        PUBLIC event_openssl
     )
 endif()
-
-target_include_directories(${BUILD_TARGET_NAME}-lib BEFORE
-    PUBLIC ${LIBEVENT_INCLUDE_DIR}
-)
 
 target_include_directories(${BUILD_TARGET_NAME}-lib
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
@@ -94,6 +93,7 @@ if(WIN32 AND (NOT MINGW))
     target_link_libraries(${BUILD_TARGET_NAME}-lib
         PUBLIC wsock32
         PUBLIC ws2_32
+        PUBLIC pthreads
     )
 endif()
 

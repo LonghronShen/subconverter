@@ -1,8 +1,8 @@
 #include <string>
 #include <map>
 #include <iostream>
-#include <quickjspp.hpp>
-#include <quickjs/quickjs-libc.h>
+#include <quickjspp/quickjspp.hpp>
+#include <quickjs-libc.h>
 
 #ifdef _WIN32
 #include <windows.h>

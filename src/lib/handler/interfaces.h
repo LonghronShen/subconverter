@@ -3,6 +3,8 @@
 
 #include <string>
 #include <map>
+#include <functional>
+
 #include <inja/inja.hpp>
 
 #include "../config/ruleset.h"

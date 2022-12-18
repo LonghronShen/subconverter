@@ -5,6 +5,11 @@
 #include <map>
 #include <string.h>
 
+#ifdef _MSC_VER
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
 struct strICaseComp
 {
     bool operator() (const std::string &lhs, const std::string &rhs) const

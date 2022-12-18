@@ -6,7 +6,7 @@
 #include <limits.h>
 
 #ifndef NO_JS_RUNTIME
-#include <quickjspp.hpp>
+#include <quickjspp/quickjspp.hpp>
 #endif // NO_JS_RUNTIME
 
 #include "../../config/regmatch.h"

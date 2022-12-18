@@ -6,7 +6,7 @@
 
 #ifndef NO_JS_RUNTIME
 
-#include <quickjspp.hpp>
+#include <quickjspp/quickjspp.hpp>
 
 void script_runtime_init(qjs::Runtime &runtime);
 int script_context_init(qjs::Context &context);

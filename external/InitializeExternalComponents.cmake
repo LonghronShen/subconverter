@@ -43,7 +43,6 @@ if(MSVC)
       include_directories(SYSTEM ${sys_time_h_SOURCE_DIR})
   endif()
 
-
   # unistd_h
   FetchContent_Declare(unistd_h
       GIT_REPOSITORY https://github.com/win32ports/unistd_h.git
@@ -58,13 +57,30 @@ if(MSVC)
 
   # dirent_h
   FetchContent_Declare(dirent_h
-      GIT_REPOSITORY https://github.com/win32ports/dirent_h.git
+      GIT_REPOSITORY https://github.com/LonghronShen/dirent_h.git
       GIT_TAG master)
 
   FetchContent_GetProperties(dirent_h)
   if(NOT dirent_h_POPULATED)
       FetchContent_Populate(dirent_h)
       include_directories(SYSTEM ${dirent_h_SOURCE_DIR})
+  endif()
+
+  # winpthreads
+  FetchContent_Declare(winpthreads
+      GIT_REPOSITORY https://github.com/heyuqi/pthreads-w32-cmake.git
+      GIT_TAG master)
+
+  FetchContent_GetProperties(winpthreads)
+  if(NOT winpthreads_POPULATED)
+      FetchContent_Populate(winpthreads)
+      add_subdirectory(${winpthreads_SOURCE_DIR} ${winpthreads_BINARY_DIR} EXCLUDE_FROM_ALL)
+      target_compile_definitions(pthreads
+        PUBLIC HAVE_STRUCT_TIMESPEC
+      )
+      target_include_directories(pthreads
+        PUBLIC ${winpthreads_SOURCE_DIR}
+      )
   endif()
 endif()
 
@@ -168,7 +184,7 @@ if(LibEvent_FOUND)
     message(STATUS "Using system libevent: ${LIBEVENT_LIB}")
 else()
   set(EVENT__DISABLE_MBEDTLS ON CACHE BOOL "EVENT__DISABLE_MBEDTLS" FORCE)
-  set(EVENT_LIBRARY_STATIC ON CACHE BOOL "EVENT_LIBRARY_STATIC" FORCE)
+  set(EVENT__LIBRARY_TYPE "STATIC" CACHE STRING "EVENT__LIBRARY_TYPE" FORCE)
   FetchContent_Declare(libevent
       GIT_REPOSITORY https://github.com/libevent/libevent.git
       GIT_TAG 02428d9a2d89ee0a595166909dd6d75b5beb777b)
@@ -177,8 +193,8 @@ else()
   if(NOT libevent_POPULATED)
       FetchContent_Populate(libevent)
       add_subdirectory(${libevent_SOURCE_DIR} ${libevent_BINARY_DIR} EXCLUDE_FROM_ALL)
-      set(LIBEVENT_LIB "event_core_static;event_pthreads_static")
-      set(LIBEVENT_INCLUDE_DIR "${libevent_SOURCE_DIR}/include")
+      set(LIBEVENT_LIB "event_core_static;event_core_extra_static")
+      set(LIBEVENT_INCLUDE_DIR "${libevent_SOURCE_DIR}/include;${libevent_BINARY_DIR}/include")
   endif()
 endif()
 
@@ -215,24 +231,14 @@ endif()
 
 
 # quickjs
-FetchContent_Declare(quickjs
-  GIT_REPOSITORY https://github.com/ftk/quickjspp.git
+FetchContent_Declare(quickjspp
+  GIT_REPOSITORY https://github.com/LonghronShen/quickjspp.git
   GIT_TAG master)
 
-FetchContent_GetProperties(quickjs)
-if(NOT quickjs_POPULATED)
-  FetchContent_Populate(quickjs)
-
-  file(GLOB quickjs_patches
-    "${CMAKE_CURRENT_LIST_DIR}/patches/quickjs/*.patch"
-  )
-
-  foreach(patch_file IN ITEMS ${quickjs_patches})
-    message(STATUS "Applying patch for quickjs: ${patch_file}")
-    patch_directory("${quickjs_SOURCE_DIR}" "${patch_file}")
-  endforeach()
-
-  add_subdirectory(${quickjs_SOURCE_DIR} ${quickjs_BINARY_DIR} EXCLUDE_FROM_ALL)
+FetchContent_GetProperties(quickjspp)
+if(NOT quickjspp_POPULATED)
+  FetchContent_Populate(quickjspp)
+  add_subdirectory(${quickjspp_SOURCE_DIR} ${quickjspp_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
 
@@ -275,6 +281,7 @@ endif()
 # inja
 if(USING_INJA)
   set(INJA_USE_EMBEDDED_JSON OFF CACHE STRING "INJA_USE_EMBEDDED_JSON" FORCE)
+  set(INJA_BUILD_TESTS OFF CACHE STRING "INJA_BUILD_TESTS" FORCE)
   FetchContent_Declare(inja
     GIT_REPOSITORY https://github.com/pantor/inja.git
     GIT_TAG 120691339d76ed72035361927749d8d259fbe0d9)
@@ -321,6 +328,7 @@ endif()
 
 
 # yaml-cpp
+set(YAML_BUILD_SHARED_LIBS OFF CACHE STRING "YAML_BUILD_SHARED_LIBS" FORCE)
 FetchContent_Declare(yaml_cpp
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
   GIT_TAG master)
