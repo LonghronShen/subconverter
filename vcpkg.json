@@ -5,6 +5,7 @@
         "boost",
         "pcre2",
         "openssl",
-        "zlib"
+        "zlib",
+        "libevent"
     ]
 }

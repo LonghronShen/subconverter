@@ -377,6 +377,9 @@ if(MINGW)
 
     find_package(Python3 REQUIRED)
 
+    get_filename_component(MINGW_HOME ${CMAKE_CXX_COMPILER} DIRECTORY)
+    set($ENV{MINGW_BUNDLEDLLS_SEARCH_PATH} "${MINGW_HOME}/../;${MINGW_HOME}/../../;")
+
     function(mingw_bundle_dll target_name)
       add_custom_target(${target_name}-deps ALL
           COMMAND "${Python3_EXECUTABLE}" "${mingw_bundledlls_SOURCE_DIR}/mingw-bundledlls" -l "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/dependencies.log" --copy "$<TARGET_FILE:${target_name}>"
