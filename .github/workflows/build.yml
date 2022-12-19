@@ -1,7 +1,7 @@
 name: GitHub CI
 on: [push]
 
-concurrency: 
+concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
@@ -20,26 +20,26 @@ jobs:
             distro: amd64-v3.10
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Build
-      run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:${{ matrix.distro }} /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
-    - name: Upload
-      uses: actions/upload-artifact@v1
-      with:
-        name: subconverter_${{ matrix.arch }}
-        path: subconverter/
-    - name: Package Release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: tar czf subconverter_${{ matrix.arch }}.tar.gz subconverter
-    - name: Draft Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: subconverter_${{ matrix.arch }}.tar.gz
-        draft: true
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Build
+        run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:${{ matrix.distro }} /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          name: subconverter_${{ matrix.arch }}
+          path: subconverter/
+      - name: Package Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: tar czf subconverter_${{ matrix.arch }}.tar.gz subconverter
+      - name: Draft Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: subconverter_${{ matrix.arch }}.tar.gz
+          draft: true
 
   linux_arm_build:
     # The host should always be linux
@@ -56,108 +56,108 @@ jobs:
             distro: ubuntu20.04
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - uses: uraimo/run-on-arch-action@v2
-      name: Run commands
-      id: runcmd
-      with:
-        arch: ${{ matrix.arch }}
-        distro: ${{ matrix.distro }}
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: uraimo/run-on-arch-action@v2
+        name: Run commands
+        id: runcmd
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
 
-        # Not required, but speeds up builds by storing container images in
-        # a GitHub package registry.
-        githubToken: ${{ github.token }}
+          # Not required, but speeds up builds by storing container images in
+          # a GitHub package registry.
+          githubToken: ${{ github.token }}
 
-        # Install some dependencies in the container. This speeds up builds if
-        # you are also using githubToken. Any dependencies installed here will
-        # be part of the container image that gets cached, so subsequent
-        # builds don't have to re-install them. The image layer is cached
-        # publicly in your project's package repository, so it is vital that
-        # no secrets are present in the container state or logs.
-        install: |
-          #!/bin/bash
+          # Install some dependencies in the container. This speeds up builds if
+          # you are also using githubToken. Any dependencies installed here will
+          # be part of the container image that gets cached, so subsequent
+          # builds don't have to re-install them. The image layer is cached
+          # publicly in your project's package repository, so it is vital that
+          # no secrets are present in the container state or logs.
+          install: |
+            #!/bin/bash
 
-          set -x
+            set -x
 
-          apt update
-          apt install -y git build-essential gcc-8 g++-8 libboost-all-dev \
-            python3-pip libevent-dev libssl-dev \
-            libcurl4-openssl-dev libpcre2-dev ninja-build pkg-config
+            apt update
+            apt install -y git build-essential gcc-8 g++-8 libboost-all-dev \
+              python3-pip libevent-dev libssl-dev \
+              libcurl4-openssl-dev libpcre2-dev ninja-build pkg-config
 
-          python3 -m pip install --upgrade pip
-          PIP_ONLY_BINARY=cmake python3 -m pip install cmake || true
+            python3 -m pip install --upgrade pip
+            PIP_ONLY_BINARY=cmake python3 -m pip install cmake || true
 
-          hash cmake 2>/dev/null || {
-              echo "Build CMake from source ..."
-              cd /tmp
-              git clone -b 'v3.25.1' --single-branch --depth 1 https://github.com/Kitware/CMake.git CMake
-              cd CMake
-              ./bootstrap --prefix=/usr/local
-              make -j$(nproc)
-              make install
-              cd ..
-              rm -rf CMake
-          }
+            hash cmake 2>/dev/null || {
+                echo "Build CMake from source ..."
+                cd /tmp
+                git clone -b 'v3.25.1' --single-branch --depth 1 https://github.com/Kitware/CMake.git CMake
+                cd CMake
+                ./bootstrap --prefix=/usr/local
+                make -j$(nproc)
+                make install
+                cd ..
+                rm -rf CMake
+            }
 
-          cmake --version
+            cmake --version
 
-        # Set an output parameter `uname` for use in subsequent steps
-        run: |
-          #!/bin/bash
+          # Set an output parameter `uname` for use in subsequent steps
+          run: |
+            #!/bin/bash
 
-          set -x
+            set -x
 
-          uname -a
+            uname -a
 
-          echo ::set-output name=uname::$(uname -a)
+            echo ::set-output name=uname::$(uname -a)
 
-          git config --global --add safe.directory '*'
+            git config --global --add safe.directory '*'
 
-          export CC=/usr/bin/gcc-8
-          export CXX=/usr/bin/g++-8
-          bash ./scripts/build.sh
-    - name: Upload
-      uses: actions/upload-artifact@v1
-      with:
-        name: subconverter_${{ matrix.arch }}
-        path: subconverter/
-    - name: Package Release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: tar czf subconverter_${{ matrix.arch }}.tar.gz subconverter
-    - name: Draft Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: subconverter_${{ matrix.arch }}.tar.gz
-        draft: true
+            export CC=/usr/bin/gcc-8
+            export CXX=/usr/bin/g++-8
+            bash ./scripts/build.sh
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          name: subconverter_${{ matrix.arch }}
+          path: subconverter/
+      - name: Package Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: tar czf subconverter_${{ matrix.arch }}.tar.gz subconverter
+      - name: Draft Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: subconverter_${{ matrix.arch }}.tar.gz
+          draft: true
 
   macos_build:
     name: macOS Build
     runs-on: macos-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Build
-      run: cd scripts && ./build.macos.release.sh
-    - name: Upload
-      uses: actions/upload-artifact@v1
-      with:
-        name: subconverter_darwin64
-        path: subconverter/
-    - name: Package Release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: tar czf subconverter_darwin64.tar.gz subconverter
-    - name: Draft Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: subconverter_darwin64.tar.gz
-        draft: true
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Build
+        run: cd scripts && ./build.macos.release.sh
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          name: subconverter_darwin64
+          path: subconverter/
+      - name: Package Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: tar czf subconverter_darwin64.tar.gz subconverter
+      - name: Draft Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: subconverter_darwin64.tar.gz
+          draft: true
 
   windows_build:
     runs-on: windows-latest
@@ -175,42 +175,42 @@ jobs:
         shell: msys2 {0}
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - uses: msys2/setup-msys2@v2
-      with:
-        update: false
-        msystem: ${{matrix.msystem}}
-        install: >-
-          git
-          make
-          patch
-          binutils
-        pacboy: >-
-          toolchain:p
-          cmake:p
-          ninja:p
-          libevent:p
-          pcre2:p
-          boost:p
-    - name: Build
-      run: cd scripts && bash ./build.windows.release.sh
-    - name: Upload
-      uses: actions/upload-artifact@v1
-      with:
-        name: subconverter_${{ matrix.name }}
-        path: subconverter/
-    - name: Package Release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: 7z a subconverter_${{ matrix.name }}.7z subconverter/
-    - name: Draft Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: subconverter_${{ matrix.name }}.7z
-        draft: true
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: false
+          msystem: ${{matrix.msystem}}
+          install: >-
+            git
+            make
+            patch
+            binutils
+          pacboy: >-
+            toolchain:p
+            cmake:p
+            ninja:p
+            libevent:p
+            pcre2:p
+            boost:p
+      - name: Build
+        run: cd scripts && bash ./build.windows.release.sh
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          name: subconverter_${{ matrix.name }}
+          path: subconverter/
+      - name: Package Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: 7z a subconverter_${{ matrix.name }}.7z subconverter/
+      - name: Draft Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: subconverter_${{ matrix.name }}.7z
+          draft: true
 
   build_win_msvc:
     name: windows-msvc-${{ matrix.arch }}
@@ -219,21 +219,50 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { arch: amd64, name: msvc_win64 }
-          - { arch: x86, name: msvc_win32 }
-          - { arch: amd64_arm64, name: msvc_arm64 }
+          - { arch: amd64, name: msvc_win64, triplet: x64-windows-static-md }
+          - { arch: x86, name: msvc_win32, triplet: x86-windows-static-md }
+          - {
+              arch: amd64_arm64,
+              name: msvc_arm64,
+              triplet: arm64-windows-static-md,
+            }
+
+    env:
+      # Indicates the location of the vcpkg as a Git submodule of the project repository.
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      # Tells vcpkg where binary packages are stored.
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
 
     steps:
       - uses: actions/checkout@v3
-      - uses: lukka/get-cmake@latest
-      - name: Dump the content of $RUNNER_TEMP
-        run: find $RUNNER_TEMP
-        shell: bash
-      - name: Dump the content of $RUNNER_WORKSPACE
-        run: find $RUNNER_WORKSPACE
+        with:
+          submodules: true
+      - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
+        run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
         shell: bash
 
-      # On Windows runners, let's ensure to have the Developer Command Prompt environment setup correctly. 
+      - uses: lukka/get-cmake@latest
+
+      # Restore both vcpkg and its artifacts from the GitHub cache service.
+      - name: Restore vcpkg and its artifacts.
+        uses: actions/cache@v3
+        with:
+          # The first path is the location of vcpkg: it contains the vcpkg executable and data files, as long as the
+          # built package archives (aka binary cache) which are located by VCPKG_DEFAULT_BINARY_CACHE env var.
+          # The other paths starting with '!' are exclusions: they contain termporary files generated during the build of the installed packages.
+          path: |
+            ${{ env.VCPKG_ROOT }}
+            !${{ env.VCPKG_ROOT }}/buildtrees
+            !${{ env.VCPKG_ROOT }}/packages
+            !${{ env.VCPKG_ROOT }}/downloads
+            !${{ env.VCPKG_ROOT }}/installed
+          # The key is composed in a way that it gets properly invalidated: this must happen whenever vcpkg's Git commit id changes, or the list of packages changes. In this case a cache miss must happen and a new entry with a new key with be pushed to GitHub the cache service.
+          # The key includes: hash of the vcpkg.json file, the hash of the vcpkg Git commit id, and the used vcpkg's triplet. The vcpkg's commit id would suffice, but computing an hash out it does not harm.
+          # Note: given a key, the cache content is immutable. If a cache entry has been created improperly, in order the recreate the right content the key must be changed as well, and it must be brand new (i.e. not existing already).
+          key: |
+            ${{ hashFiles( 'vcpkg.json' ) }}-${{ hashFiles( '.git/modules/vcpkg/HEAD' )}}-${{ matrix.triplet }}
+
+      # On Windows runners, let's ensure to have the Developer Command Prompt environment setup correctly.
       # As used here the Developer Command Prompt created is targeting x64 and using the default the Windows SDK.
       - uses: ilammy/msvc-dev-cmd@v1
         with:
