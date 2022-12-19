@@ -268,23 +268,26 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
 
-      # Build the whole project with Ninja (which is spawn by CMake). Debug configuration.
-      - name: Configure
+      # Run CMake to generate Ninja project files, using the vcpkg's toolchain file to resolve and install the dependencies as specified in vcpkg.json.
+      - name: Install dependencies and generate project files
         run: |
-          mkdir build && cd build && cmake --compile-no-warning-as-error -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+          cmake --compile-no-warning-as-error --preset ninja-multi-vcpkg
 
-      # Build the whole project with Ninja (which is spawn by CMake). Debug configuration.
-      - name: Build
-        run: cd build && cmake --build .
+      # Build the whole project with Ninja (which is spawn by CMake). Release configuration.
+      - name: Build (Release)
+        run: |
+          cmake --build --preset ninja-multi-vcpkg-release
 
       - name: Upload
         uses: actions/upload-artifact@v1
         with:
           name: subconverter_${{ matrix.name }}
-          path: build/bin/
+          path: builds/ninja-multi-vcpkg/bin/
+
       - name: Package Release
         if: startsWith(github.ref, 'refs/tags/')
-        run: 7z a subconverter_${{ matrix.name }}.7z build/bin/
+        run: 7z a subconverter_${{ matrix.name }}.7z builds/ninja-multi-vcpkg/bin/
+
       - name: Draft Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
