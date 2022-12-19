@@ -232,6 +232,7 @@ jobs:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       # Tells vcpkg where binary packages are stored.
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+      VCPKG_TARGET_TRIPLET: "${{ matrix.triplet }}"
 
     steps:
       - uses: actions/checkout@v3
@@ -271,7 +272,7 @@ jobs:
       # Run CMake to generate Ninja project files, using the vcpkg's toolchain file to resolve and install the dependencies as specified in vcpkg.json.
       - name: Install dependencies and generate project files
         run: |
-          cmake --compile-no-warning-as-error --preset ninja-multi-vcpkg
+          cmake --compile-no-warning-as-error --preset ninja-multi-vcpkg -DVCPKG_TARGET_TRIPLET="${{ matrix.triplet }}"
 
       # Build the whole project with Ninja (which is spawn by CMake). Release configuration.
       - name: Build (Release)
