@@ -219,12 +219,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { arch: amd64, name: msvc_win64, triplet: x64-windows-static-md }
-          - { arch: x86, name: msvc_win32, triplet: x86-windows-static-md }
+          - { arch: amd64, name: msvc_win64, triplet: x64-windows-static }
+          - { arch: x86, name: msvc_win32, triplet: x86-windows-static }
           - {
               arch: amd64_arm64,
               name: msvc_arm64,
-              triplet: arm64-windows-static-md,
+              triplet: arm64-windows-static,
             }
 
     env:
