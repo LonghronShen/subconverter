@@ -211,3 +211,54 @@ jobs:
       with:
         files: subconverter_${{ matrix.name }}.7z
         draft: true
+
+  build_win_msvc:
+    name: windows-msvc-${{ matrix.arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: amd64, name: msvc_win64 }
+          - { arch: x86, name: msvc_win32 }
+          - { arch: amd64_arm64, name: msvc_arm64 }
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: lukka/get-cmake@latest
+      - name: Dump the content of $RUNNER_TEMP
+        run: find $RUNNER_TEMP
+        shell: bash
+      - name: Dump the content of $RUNNER_WORKSPACE
+        run: find $RUNNER_WORKSPACE
+        shell: bash
+
+      # On Windows runners, let's ensure to have the Developer Command Prompt environment setup correctly. 
+      # As used here the Developer Command Prompt created is targeting x64 and using the default the Windows SDK.
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+
+      # Build the whole project with Ninja (which is spawn by CMake). Debug configuration.
+      - name: Configure
+        run: |
+          mkdir build && cd build && cmake --compile-no-warning-as-error -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+
+      # Build the whole project with Ninja (which is spawn by CMake). Debug configuration.
+      - name: Build
+        run: cd build && cmake --build .
+
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          name: subconverter_${{ matrix.name }}
+          path: build/bin/
+      - name: Package Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: 7z a subconverter_${{ matrix.name }}.7z build/bin/
+      - name: Draft Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: subconverter_${{ matrix.name }}.7z
+          draft: true
