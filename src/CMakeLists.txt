@@ -89,7 +89,7 @@ target_link_libraries(${BUILD_TARGET_NAME}-lib
     # PUBLIC duktape
 )
 
-if(WIN32 AND (NOT MINGW))
+if(WIN32)
     target_link_libraries(${BUILD_TARGET_NAME}-lib
         PUBLIC wsock32
         PUBLIC ws2_32
