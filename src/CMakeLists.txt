@@ -95,17 +95,19 @@ if(WIN32)
         PUBLIC ws2_32
         PUBLIC iphlpapi
     )
-    if(PThreads4W_FOUND)
-        target_link_libraries(${BUILD_TARGET_NAME}-lib
-            PUBLIC PThreads4W::PThreads4W
-        )
-    else()
-        target_link_libraries(${BUILD_TARGET_NAME}-lib
-            PUBLIC pthreads
-        )
-        target_compile_definitions(${BUILD_TARGET_NAME}-lib
-            PUBLIC "PTW32_STATIC_LIB"
-        )
+    if(MSVC)
+        if(PThreads4W_FOUND)
+            target_link_libraries(${BUILD_TARGET_NAME}-lib
+                PUBLIC PThreads4W::PThreads4W
+            )
+        else()
+            target_link_libraries(${BUILD_TARGET_NAME}-lib
+                PUBLIC pthreads
+            )
+            target_compile_definitions(${BUILD_TARGET_NAME}-lib
+                PUBLIC "PTW32_STATIC_LIB"
+            )
+        endif()
     endif()
 endif()
 
