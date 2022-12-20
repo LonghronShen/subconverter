@@ -383,11 +383,12 @@ if(MINGW)
     find_package(Python3 REQUIRED)
 
     get_filename_component(MINGW_HOME ${CMAKE_CXX_COMPILER} DIRECTORY)
-    set($ENV{MINGW_BUNDLEDLLS_SEARCH_PATH} "${MINGW_HOME}/../;${MINGW_HOME}/../../;")
+    set(MINGW_BUNDLEDLLS_SEARCH_PATH "${MINGW_HOME}/../:${MINGW_HOME}/../../")
+    message(STATUS "Searching MinGW DLLs in: \"${MINGW_BUNDLEDLLS_SEARCH_PATH}\"")
 
     function(mingw_bundle_dll target_name)
       add_custom_target(${target_name}-deps ALL
-          COMMAND "${Python3_EXECUTABLE}" "${mingw_bundledlls_SOURCE_DIR}/mingw-bundledlls" -l "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/dependencies.log" --copy "$<TARGET_FILE:${target_name}>"
+          COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${MINGW_BUNDLEDLLS_SEARCH_PATH}" "${Python3_EXECUTABLE}" "${mingw_bundledlls_SOURCE_DIR}/mingw-bundledlls" -l "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/dependencies.log" --copy "$<TARGET_FILE:${target_name}>"
           WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
           DEPENDS ${target_name}
           COMMENT "Copying MinGW libs ..."
