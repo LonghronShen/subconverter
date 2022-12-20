@@ -382,8 +382,12 @@ if(MINGW)
 
     find_package(Python3 REQUIRED)
 
-    get_filename_component(MINGW_HOME ${CMAKE_CXX_COMPILER} DIRECTORY)
-    set(MINGW_BUNDLEDLLS_SEARCH_PATH "${MINGW_HOME}/../:${MINGW_HOME}/../../")
+    get_filename_component(MINGW_COMPILER_HOME ${CMAKE_CXX_COMPILER} DIRECTORY)
+
+    file(REAL_PATH "${MINGW_COMPILER_HOME}/../" TOOLCHAIN_DIR)
+    file(REAL_PATH "${MINGW_COMPILER_HOME}/../../" MSYS_DIR)
+
+    set(MINGW_BUNDLEDLLS_SEARCH_PATH "${TOOLCHAIN_DIR}:${MSYS_DIR}")
     message(STATUS "Searching MinGW DLLs in: \"${MINGW_BUNDLEDLLS_SEARCH_PATH}\"")
 
     function(mingw_bundle_dll target_name)
