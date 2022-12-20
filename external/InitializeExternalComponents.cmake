@@ -68,7 +68,9 @@ if(MSVC)
 
   # winpthreads
   find_package(PThreads4W QUIET)
-  if(NOT PThreads4W_FOUND)
+  if(PThreads4W_FOUND)
+    message(STATUS "Using system PThreads4W with vcpkg.")
+  else()
     FetchContent_Declare(winpthreads
         GIT_REPOSITORY https://github.com/heyuqi/pthreads-w32-cmake.git
         GIT_TAG master)

@@ -94,7 +94,6 @@ if(WIN32 AND (NOT MINGW))
         PUBLIC wsock32
         PUBLIC ws2_32
         PUBLIC iphlpapi
-        PUBLIC pthreads
     )
     if(PThreads4W_FOUND)
         target_link_libraries(${BUILD_TARGET_NAME}-lib
