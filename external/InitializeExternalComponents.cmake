@@ -67,20 +67,23 @@ if(MSVC)
   endif()
 
   # winpthreads
-  FetchContent_Declare(winpthreads
-      GIT_REPOSITORY https://github.com/heyuqi/pthreads-w32-cmake.git
-      GIT_TAG master)
+  find_package(PThreads4W QUIET)
+  if(NOT PThreads4W_FOUND)
+    FetchContent_Declare(winpthreads
+        GIT_REPOSITORY https://github.com/heyuqi/pthreads-w32-cmake.git
+        GIT_TAG master)
 
-  FetchContent_GetProperties(winpthreads)
-  if(NOT winpthreads_POPULATED)
-      FetchContent_Populate(winpthreads)
-      add_subdirectory(${winpthreads_SOURCE_DIR} ${winpthreads_BINARY_DIR} EXCLUDE_FROM_ALL)
-      target_compile_definitions(pthreads
-        PUBLIC HAVE_STRUCT_TIMESPEC
-      )
-      target_include_directories(pthreads
-        PUBLIC ${winpthreads_SOURCE_DIR}
-      )
+    FetchContent_GetProperties(winpthreads)
+    if(NOT winpthreads_POPULATED)
+        FetchContent_Populate(winpthreads)
+        add_subdirectory(${winpthreads_SOURCE_DIR} ${winpthreads_BINARY_DIR} EXCLUDE_FROM_ALL)
+        target_compile_definitions(pthreads
+          PUBLIC HAVE_STRUCT_TIMESPEC
+        )
+        target_include_directories(pthreads
+          PUBLIC ${winpthreads_SOURCE_DIR}
+        )
+    endif()
   endif()
 endif()
 

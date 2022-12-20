@@ -93,8 +93,21 @@ if(WIN32 AND (NOT MINGW))
     target_link_libraries(${BUILD_TARGET_NAME}-lib
         PUBLIC wsock32
         PUBLIC ws2_32
+        PUBLIC iphlpapi
         PUBLIC pthreads
     )
+    if(PThreads4W_FOUND)
+        target_link_libraries(${BUILD_TARGET_NAME}-lib
+            PUBLIC PThreads4W::PThreads4W
+        )
+    else()
+        target_link_libraries(${BUILD_TARGET_NAME}-lib
+            PUBLIC pthreads
+        )
+        target_compile_definitions(${BUILD_TARGET_NAME}-lib
+            PUBLIC "PTW32_STATIC_LIB"
+        )
+    endif()
 endif()
 
 add_library(${BUILD_TARGET_NAME}-shared SHARED ${CMAKE_CURRENT_LIST_DIR}/lib/wrapper.cpp)
