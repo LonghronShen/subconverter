@@ -387,7 +387,7 @@ if(MINGW)
     file(REAL_PATH "${MINGW_COMPILER_HOME}/../" TOOLCHAIN_DIR)
     file(REAL_PATH "${MINGW_COMPILER_HOME}/../../" MSYS_DIR)
 
-    set(MINGW_BUNDLEDLLS_SEARCH_PATH "${TOOLCHAIN_DIR};${MSYS_DIR}")
+    set(MINGW_BUNDLEDLLS_SEARCH_PATH "${TOOLCHAIN_DIR}:${MSYS_DIR}")
     message(STATUS "Searching MinGW DLLs in: \"${MINGW_BUNDLEDLLS_SEARCH_PATH}\"")
 
     function(mingw_bundle_dll target_name)
