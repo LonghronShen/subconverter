@@ -56,7 +56,7 @@ jobs:
             distro: ubuntu20.04
           - arch: 386
             distro: ubuntu20.04
-            base_image: i686/ubuntu:20.04
+            base_image: i386/ubuntu:20.04
           - arch: x86_64
             distro: ubuntu20.04
             base_image: amd64/ubuntu:20.04
