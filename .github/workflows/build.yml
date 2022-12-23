@@ -6,47 +6,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux_x86_build:
-    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
-    runs-on: ubuntu-latest
-
-    # Run steps on a matrix of 3 arch/distro combinations
-    strategy:
-      matrix:
-        include:
-          - arch: x86
-            distro: x86-v3.10
-          - arch: amd64
-            distro: amd64-v3.10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Build
-        run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:${{ matrix.distro }} /bin/sh -c "apk add bash && cd /root/workdir/scripts && bash ./build.alpine.release.sh"
-      - name: Upload
-        uses: actions/upload-artifact@v1
-        with:
-          name: subconverter_${{ matrix.arch }}
-          path: subconverter/
-      - name: Package Release
-        if: startsWith(github.ref, 'refs/tags/')
-        run: tar czf subconverter_${{ matrix.arch }}.tar.gz subconverter
-      - name: Draft Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: subconverter_${{ matrix.arch }}.tar.gz
-          draft: true
-
-  linux_arm_build:
+  linux_multi_arch_build:
     # The host should always be linux
     runs-on: ubuntu-18.04
     name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
 
-    # Run steps on a matrix of 3 arch/distro combinations
+    # Run steps on a matrix of these arch/distro combinations
     strategy:
       matrix:
         include:
@@ -139,6 +104,69 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: subconverter_${{ matrix.arch }}.tar.gz
+          draft: true
+
+  # For building Entware package
+  entware_multi_arch_build:
+    # The host should always be linux
+    runs-on: ubuntu-18.04
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+
+    # Run steps on a matrix of these arch/distro combinations
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            distro: entware-aarch64-k3.10
+            base_image: longhronshens/entware-builder:arm64v8-latest
+          - arch: armv7
+            distro: entware-armv7sf-k3.2
+            base_image: longhronshens/entware-builder:armv7-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: uraimo/run-on-arch-action@v2
+        name: Run commands
+        id: runcmd
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+          base_image: ${{ matrix.base_image }}
+
+          # Not required, but speeds up builds by storing container images in
+          # a GitHub package registry.
+          githubToken: ${{ github.token }}
+
+          # Set an output parameter `uname` for use in subsequent steps
+          run: |
+            #!/bin/bash
+
+            set -x
+
+            uname -a
+
+            echo ::set-output name=uname::$(uname -a)
+
+            git config --global --add safe.directory '*'
+
+            source /opt/bin/gcc_env.sh
+            bash ./scripts/build.sh
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          name: subconverter_${{ matrix.arch }}
+          path: subconverter/
+      - name: Package Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: tar czf subconverter_entware_${{ matrix.arch }}.tar.gz subconverter
+      - name: Draft Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: subconverter_entware_${{ matrix.arch }}.tar.gz
           draft: true
 
   macos_build:
