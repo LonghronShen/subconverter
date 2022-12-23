@@ -1,0 +1,38 @@
+FROM busybox AS builder
+
+RUN mkdir -p /opt && chmod 600 /opt && \
+    cd /opt && wget https://bin.entware.net/x64-k3.2/installer/generic.sh && \
+    sh ./generic.sh && \
+    echo "export PATH=/opt/bin:/opt/sbin:\$PATH" > /etc/profile && \
+    source /etc/profile && \
+    opkg install --force-overwrite automake bash busybox \
+        cmake coreutils coreutils-chgrp coreutils-chown coreutils-install \
+        diffutils gcc git git git-http htop icu \
+        ldconfig libintl-full libopenssl libopenssl-conf \
+        libpcre2 libevent2-openssl libcurl libtool-bin \
+        net-tools openssh-client-utils \
+        openssh-keygen openssh-moduli openssh-sftp-client \
+        patch pkg-config python3-pip python3-setuptools \
+        rsync screen shadow tar wget && \
+    opkg install boost boost-atomic boost-chrono boost-container \
+        boost-context boost-contract boost-coroutine boost-date_time \
+        boost-fiber boost-filesystem boost-graph boost-iostreams boost-json \
+        boost-locale boost-log boost-math boost-nowide boost-program_options \
+        boost-python3 boost-random boost-regex boost-serialization \
+        boost-stacktrace boost-system boost-test boost-thread boost-timer \
+        boost-type_erasure boost-wave boost-wserialization
+
+RUN /opt/bin/busybox wget -qO- "$(/opt/bin/busybox sed -Ene \
+  's|^src/gz[[:space:]]entware[[:space:]]https?([[:graph:]]+)|http\1/include/include.tar.gz|p' \
+  /opt/etc/opkg.conf)" | /opt/bin/busybox tar x -vzC /opt/include
+
+RUN cd /opt/tmp && git clone https://github.com/ninja-build/ninja.git && \
+    cd ./ninja && \
+    git checkout release && \
+    CONFIG_SHELL=/opt/bin/bash python3 ./configure.py --bootstrap && \
+    install -Dm0755 -t /opt/bin ./ninja && \
+    cd /opt/tmp && rm -Rf /opt/tmp/ninja
+
+WORKDIR /app
+
+COPY . .

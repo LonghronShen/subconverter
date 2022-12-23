@@ -54,6 +54,12 @@ jobs:
             distro: ubuntu20.04
           - arch: armv7
             distro: ubuntu20.04
+          - arch: 386
+            distro: ubuntu20.04
+            base_image: i686/ubuntu:20.04
+          - arch: x86_64
+            distro: ubuntu20.04
+            base_image: amd64/ubuntu:20.04
 
     steps:
       - name: Checkout
@@ -66,6 +72,7 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
+          base_image: ${{ matrix.base_image }}
 
           # Not required, but speeds up builds by storing container images in
           # a GitHub package registry.
