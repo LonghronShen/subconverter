@@ -140,17 +140,17 @@ jobs:
           # a GitHub package registry.
           githubToken: ${{ github.token }}
 
-          install: |
-            #!/opt/bin/bash
+          installShell: /opt/bin/bash
 
+          install: |
             set -x
 
             ldconfig -p
 
+          shell: /opt/bin/bash
+
           # Set an output parameter `uname` for use in subsequent steps
           run: |
-            #!/opt/bin/bash
-
             set -x
 
             uname -a
