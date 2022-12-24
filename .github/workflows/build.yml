@@ -167,16 +167,16 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v1
         with:
-          name: subconverter_${{ matrix.arch }}
+          name: subconverter_${{ matrix.distro }}_${{ matrix.arch }}
           path: subconverter/
       - name: Package Release
         if: startsWith(github.ref, 'refs/tags/')
-        run: tar czf subconverter_entware_${{ matrix.arch }}.tar.gz subconverter
+        run: tar czf subconverter_${{ matrix.distro }}_${{ matrix.arch }}.tar.gz subconverter
       - name: Draft Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: subconverter_entware_${{ matrix.arch }}.tar.gz
+          files: subconverter_${{ matrix.distro }}_${{ matrix.arch }}.tar.gz
           draft: true
 
   macos_build:
