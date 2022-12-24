@@ -52,6 +52,12 @@ if(USING_MALLOC_TRIM)
   target_compile_definitions(${BUILD_TARGET_NAME}-lib PUBLIC -DMALLOC_TRIM)
 endif()
 
+if(ATOMIC_FOUND)
+    target_link_libraries(${BUILD_TARGET_NAME}-lib
+        PUBLIC ${ATOMIC_LIBRARIES}
+    )
+endif()
+
 if(LibEvent_FOUND)
     target_link_libraries(${BUILD_TARGET_NAME}-lib
         PUBLIC ${LIBEVENT_LIB}

@@ -3,6 +3,8 @@ find_package(PkgConfig QUIET)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+find_package(Atomic QUIET)
+
 if(NOT USING_STD_REGEX)
     find_package(PCRE2 QUIET)
     if(PCRE2_FOUND)
