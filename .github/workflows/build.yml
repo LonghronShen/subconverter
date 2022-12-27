@@ -118,10 +118,13 @@ jobs:
         include:
           - arch: aarch64
             distro: entware-aarch64-k3.10
-            base_image: longhronshens/entware-builder:arm64v8-latest
+            base_image: longhronshens/entware-builder:aarch64-k3.10-latest
           - arch: armv7
             distro: entware-armv7sf-k3.2
-            base_image: longhronshens/entware-builder:armv7-latest
+            base_image: longhronshens/entware-builder:armv7sf-k3.2-latest
+          - arch: mipsel
+            distro: entware-mipselsf-k3.4
+            base_image: longhronshens/entware-builder:mipselsf-k3.4-latest
 
     steps:
       - name: Checkout
