@@ -131,13 +131,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: uraimo/run-on-arch-action@v2
+      - uses: LonghronShen/run-on-arch-action@master
         name: Run commands
         id: runcmd
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
           base_image: ${{ matrix.base_image }}
+          qemu_static_image: longhronshens/qemu-user-static
 
           # Not required, but speeds up builds by storing container images in
           # a GitHub package registry.
