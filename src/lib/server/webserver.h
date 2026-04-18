@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <curl/curlver.h>
-#include <event2/http.h>
 #include <map>
 #include <string>
 
@@ -80,9 +79,9 @@ public:
 private:
   int serveFile(const std::string &filename, std::string &content_type,
                 std::string &return_data);
-  inline int process_request(Request &request, Response &response,
-                             std::string &return_data);
-  void on_request(evhttp_request *req, void *args);
+  int process_request(Request &request, Response &response,
+                      std::string &return_data);
+  void on_request(void *req, void *args);
   std::vector<responseRoute> responses;
   string_map redirect_map;
 };

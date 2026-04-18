@@ -7,6 +7,23 @@ file(GLOB_RECURSE src
 	${CMAKE_CURRENT_LIST_DIR}/lib/*.cpp
 )
 
+list(REMOVE_ITEM src
+    ${CMAKE_CURRENT_LIST_DIR}/lib/server/webserver.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/lib/server/webserver_libevent.cpp
+)
+
+set(WEBSERVER_BACKEND_SRC "")
+if(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "libevent")
+    set(WEBSERVER_BACKEND_SRC ${CMAKE_CURRENT_LIST_DIR}/lib/server/webserver_libevent.cpp)
+elseif(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "kleinshttp")
+    set(WEBSERVER_BACKEND_SRC ${CMAKE_CURRENT_LIST_DIR}/lib/server/webserver_kleinshttp.cpp)
+    if(NOT EXISTS ${WEBSERVER_BACKEND_SRC})
+        message(FATAL_ERROR "Selected WebServer backend '${SUBCONVERTER_WEBSERVER_BACKEND}' requires missing implementation: ${WEBSERVER_BACKEND_SRC}")
+    endif()
+endif()
+
+list(APPEND src ${WEBSERVER_BACKEND_SRC})
+
 file(GLOB_RECURSE public_headers
     ${CMAKE_CURRENT_LIST_DIR}/lib/*.h
     ${CMAKE_CURRENT_LIST_DIR}/lib/*.hpp
@@ -40,7 +57,7 @@ target_compile_definitions(${BUILD_TARGET_NAME}-lib
     PRIVATE -DYAML_CPP_STATIC_DEFINE
 )
 
-if(USE_STD_REGEX)
+if(USING_STD_REGEX)
   target_compile_definitions(${BUILD_TARGET_NAME}-lib PUBLIC -DUSE_STD_REGEX)
 endif()
 
@@ -58,31 +75,41 @@ if(ATOMIC_FOUND)
     )
 endif()
 
-if(LibEvent_FOUND)
+if(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "libevent")
+    if(LibEvent_FOUND)
+        target_link_libraries(${BUILD_TARGET_NAME}-lib
+            PUBLIC ${LIBEVENT_LIB}
+        )
+        target_include_directories(${BUILD_TARGET_NAME}-lib BEFORE
+            PUBLIC ${LIBEVENT_INCLUDE_DIR}
+        )
+    else()
+        target_link_libraries(${BUILD_TARGET_NAME}-lib
+            PUBLIC event_core
+            PUBLIC event_extra
+            PUBLIC event_openssl
+        )
+    endif()
+elseif(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "kleinshttp")
     target_link_libraries(${BUILD_TARGET_NAME}-lib
-        PUBLIC ${LIBEVENT_LIB}
-    )
-    target_include_directories(${BUILD_TARGET_NAME}-lib BEFORE
-        PUBLIC ${LIBEVENT_INCLUDE_DIR}
-    )
-else()
-    target_link_libraries(${BUILD_TARGET_NAME}-lib
-        PUBLIC event_core
-        PUBLIC event_extra
-        PUBLIC event_openssl
+        PUBLIC subconverter_kleinshttp
     )
 endif()
 
 target_include_directories(${BUILD_TARGET_NAME}-lib
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
-    PUBLIC ${PCRE2_INCLUDE_DIR}
     PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib
 )
+
+if(NOT USING_STD_REGEX)
+    target_include_directories(${BUILD_TARGET_NAME}-lib
+        PUBLIC ${PCRE2_INCLUDE_DIR}
+    )
+endif()
 
 target_link_libraries(${BUILD_TARGET_NAME}-lib
     PUBLIC ${CMAKE_THREAD_LIBS_INIT}
     PUBLIC ${CXX_FILESYSTEM_LIBS}
-    PUBLIC ${PCRE2_LIBRARY}
     PUBLIC CURL::libcurl
     # PUBLIC Rapidjson
     PUBLIC toml11::toml11
@@ -90,10 +117,21 @@ target_link_libraries(${BUILD_TARGET_NAME}-lib
     PUBLIC libcron
     PUBLIC quickjspp
     PUBLIC pantor::inja
-    PUBLIC jinja2cpp
     PUBLIC jpcre2
     # PUBLIC duktape
 )
+
+if(NOT USING_STD_REGEX)
+    target_link_libraries(${BUILD_TARGET_NAME}-lib
+        PUBLIC ${PCRE2_LIBRARY}
+    )
+endif()
+
+if(USING_JINJA2CPP)
+    target_link_libraries(${BUILD_TARGET_NAME}-lib
+        PUBLIC jinja2cpp
+    )
+endif()
 
 if(WIN32)
     target_link_libraries(${BUILD_TARGET_NAME}-lib

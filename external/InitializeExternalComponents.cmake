@@ -92,32 +92,37 @@ if(MSVC)
 endif()
 
 # boost-cmake
-if(WIN32)
-    set(Boost_USE_STATIC_LIBS ON CACHE STRING "Boost_USE_STATIC_LIBS" FORCE)
-    set(Boost_USE_STATIC_RUNTIME ON CACHE STRING "Boost_USE_STATIC_RUNTIME" FORCE)
-endif()
-
-# variant algorithm
-find_package(Boost 1.65.1 COMPONENTS thread log log_setup system program_options filesystem coroutine locale regex unit_test_framework serialization)
-if(Boost_FOUND)
-    message(STATUS "** Boost Include: ${Boost_INCLUDE_DIR}")
-    message(STATUS "** Boost Libraries Directory: ${Boost_LIBRARY_DIRS}")
-    message(STATUS "** Boost Libraries: ${Boost_LIBRARIES}")
-    include_directories(${Boost_INCLUDE_DIRS})
-    add_compile_definitions("SUBCONVERTER_USE_BOOST")
-else()
+# local probing override for Phase A:
+# Boost appears to be template-engine related, not a hard webserver/backend requirement.
+# Only resolve/fetch it when Jinja2Cpp is explicitly enabled.
+if(USING_JINJA2CPP)
     if(WIN32)
-        message(WARNING "Plase check your vcpkg settings or global environment variables for the boost library.")
-    else()
-        FetchContent_Declare(boost_cmake
-            GIT_REPOSITORY https://github.com/Orphis/boost-cmake.git
-            GIT_TAG d3951bc7f0b9d09005f92aedcf6acfc595f050ea)
+        set(Boost_USE_STATIC_LIBS ON CACHE STRING "Boost_USE_STATIC_LIBS" FORCE)
+        set(Boost_USE_STATIC_RUNTIME ON CACHE STRING "Boost_USE_STATIC_RUNTIME" FORCE)
+    endif()
 
-        FetchContent_GetProperties(boost_cmake)
-        if(NOT boost_cmake_POPULATED)
-            FetchContent_Populate(boost_cmake)
-            add_subdirectory(${boost_cmake_SOURCE_DIR} ${boost_cmake_BINARY_DIR} EXCLUDE_FROM_ALL)
-            add_compile_definitions("SUBCONVERTER_USE_BOOST")
+    # variant algorithm
+    find_package(Boost 1.65.1 COMPONENTS thread log log_setup system program_options filesystem coroutine locale regex unit_test_framework serialization)
+    if(Boost_FOUND)
+        message(STATUS "** Boost Include: ${Boost_INCLUDE_DIR}")
+        message(STATUS "** Boost Libraries Directory: ${Boost_LIBRARY_DIRS}")
+        message(STATUS "** Boost Libraries: ${Boost_LIBRARIES}")
+        include_directories(${Boost_INCLUDE_DIRS})
+        add_compile_definitions("SUBCONVERTER_USE_BOOST")
+    else()
+        if(WIN32)
+            message(WARNING "Plase check your vcpkg settings or global environment variables for the boost library.")
+        else()
+            FetchContent_Declare(boost_cmake
+                GIT_REPOSITORY https://github.com/Orphis/boost-cmake.git
+                GIT_TAG d3951bc7f0b9d09005f92aedcf6acfc595f050ea)
+
+            FetchContent_GetProperties(boost_cmake)
+            if(NOT boost_cmake_POPULATED)
+                FetchContent_Populate(boost_cmake)
+                add_subdirectory(${boost_cmake_SOURCE_DIR} ${boost_cmake_BINARY_DIR} EXCLUDE_FROM_ALL)
+                add_compile_definitions("SUBCONVERTER_USE_BOOST")
+            endif()
         endif()
     endif()
 endif()
@@ -145,14 +150,19 @@ endif()
 
 # fmt
 set(FMT_INSTALL ON CACHE BOOL "FMT_INSTALL" FORCE)
-FetchContent_Declare(fmt
-    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG master)
+find_package(fmt CONFIG QUIET)
+if(fmt_FOUND)
+    message(STATUS "Using system fmt")
+else()
+    FetchContent_Declare(fmt
+        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+        GIT_TAG 10.1.1)
 
-FetchContent_GetProperties(fmt)
-if(NOT fmt_POPULATED)
-    FetchContent_Populate(fmt)
-    add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR} EXCLUDE_FROM_ALL)
+    FetchContent_GetProperties(fmt)
+    if(NOT fmt_POPULATED)
+        FetchContent_Populate(fmt)
+        add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif()
 endif()
 
 
@@ -173,6 +183,16 @@ find_package(CURL QUIET)
 if(CURL_FOUND)
     message(STATUS "Using system libcurl: ${CURL_LIBRARIES}")
 else()
+  # Keep curl feature surface intentionally small for backend validation.
+  set(CURL_USE_LIBPSL OFF CACHE BOOL "Use libpsl" FORCE)
+  set(CURL_BROTLI OFF CACHE BOOL "Use Brotli" FORCE)
+  set(CURL_ZSTD OFF CACHE BOOL "Use zstd" FORCE)
+  set(CURL_ZLIB OFF CACHE BOOL "Use zlib" FORCE)
+  set(USE_NGHTTP2 OFF CACHE BOOL "Use nghttp2 library" FORCE)
+  set(USE_LIBIDN2 OFF CACHE BOOL "Use libidn2 for IDN support" FORCE)
+  set(BUILD_CURL_EXE OFF CACHE BOOL "Build curl executable" FORCE)
+  set(BUILD_TESTING OFF CACHE BOOL "Build tests" FORCE)
+
   FetchContent_Declare(curl
       GIT_REPOSITORY https://github.com/curl/curl
       GIT_TAG master)
@@ -185,24 +205,29 @@ else()
 endif()
 
 
-# libevent
-find_package(LibEvent QUIET)
-if(LibEvent_FOUND)
-    message(STATUS "Using system libevent: ${LIBEVENT_LIB}")
-else()
-  set(EVENT__DISABLE_MBEDTLS ON CACHE BOOL "EVENT__DISABLE_MBEDTLS" FORCE)
-  set(EVENT__LIBRARY_TYPE "STATIC" CACHE STRING "EVENT__LIBRARY_TYPE" FORCE)
-  FetchContent_Declare(libevent
-      GIT_REPOSITORY https://github.com/libevent/libevent.git
-      GIT_TAG 02428d9a2d89ee0a595166909dd6d75b5beb777b)
+# libevent / kleinshttp backend deps
+if(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "libevent")
+  find_package(LibEvent QUIET)
+  if(LibEvent_FOUND)
+      message(STATUS "Using system libevent: ${LIBEVENT_LIB}")
+  else()
+    set(EVENT__DISABLE_MBEDTLS ON CACHE BOOL "EVENT__DISABLE_MBEDTLS" FORCE)
+    set(EVENT__LIBRARY_TYPE "STATIC" CACHE STRING "EVENT__LIBRARY_TYPE" FORCE)
+    FetchContent_Declare(libevent
+        GIT_REPOSITORY https://github.com/libevent/libevent.git
+        GIT_TAG 02428d9a2d89ee0a595166909dd6d75b5beb777b)
 
-  FetchContent_GetProperties(libevent)
-  if(NOT libevent_POPULATED)
-      FetchContent_Populate(libevent)
-      add_subdirectory(${libevent_SOURCE_DIR} ${libevent_BINARY_DIR} EXCLUDE_FROM_ALL)
-      set(LIBEVENT_LIB "event_core_static;event_core_extra_static")
-      set(LIBEVENT_INCLUDE_DIR "${libevent_SOURCE_DIR}/include;${libevent_BINARY_DIR}/include")
+    FetchContent_GetProperties(libevent)
+    if(NOT libevent_POPULATED)
+        FetchContent_Populate(libevent)
+        add_subdirectory(${libevent_SOURCE_DIR} ${libevent_BINARY_DIR} EXCLUDE_FROM_ALL)
+        set(LIBEVENT_LIB "event_core_static;event_core_extra_static")
+        set(LIBEVENT_INCLUDE_DIR "${libevent_SOURCE_DIR}/include;${libevent_BINARY_DIR}/include")
+    endif()
   endif()
+elseif(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "kleinshttp")
+  message(STATUS "WebServer backend selected: kleinshttp")
+  include(KleinsHTTP)
 endif()
 
 
@@ -264,22 +289,22 @@ endif()
 
 
 # Jinja2Cpp
-set(JINJA2CPP_DEPS_MODE "external-as-target" CACHE STRING "JINJA2CPP_DEPS_MODE" FORCE)
-set(JINJA2CPP_BUILD_SHARED OFF CACHE BOOL "JINJA2CPP_BUILD_SHARED" FORCE)
-set(JINJA2CPP_BUILD_TESTS OFF CACHE BOOL "JINJA2CPP_BUILD_TESTS" FORCE)
-set(JINJA2_PRIVATE_LIBS_INT "" CACHE STRING "JINJA2_PRIVATE_LIBS_INT" FORCE)
-FetchContent_Declare(jinja2cpp
-  GIT_REPOSITORY https://github.com/jinja2cpp/Jinja2Cpp.git
-  GIT_SUBMODULES "thirdparty/gtest;thirdparty/fmtlib;thirdparty/nonstd/expected-lite;thirdparty/nonstd/optional-lite;thirdparty/nonstd/string-view-lite;thirdparty/nonstd/variant-lite"
-  GIT_TAG 1dacf16a1f6e216f5dcb7e7b8ef9626634c29cf9)
+if(USING_JINJA2CPP)
+  set(JINJA2CPP_DEPS_MODE "external-as-target" CACHE STRING "JINJA2CPP_DEPS_MODE" FORCE)
+  set(JINJA2CPP_BUILD_SHARED OFF CACHE BOOL "JINJA2CPP_BUILD_SHARED" FORCE)
+  set(JINJA2CPP_BUILD_TESTS OFF CACHE BOOL "JINJA2CPP_BUILD_TESTS" FORCE)
+  set(JINJA2_PRIVATE_LIBS_INT "" CACHE STRING "JINJA2_PRIVATE_LIBS_INT" FORCE)
+  FetchContent_Declare(jinja2cpp
+    GIT_REPOSITORY https://github.com/jinja2cpp/Jinja2Cpp.git
+    GIT_SUBMODULES "thirdparty/gtest;thirdparty/fmtlib;thirdparty/nonstd/expected-lite;thirdparty/nonstd/optional-lite;thirdparty/nonstd/string-view-lite;thirdparty/nonstd/variant-lite"
+    GIT_TAG 1dacf16a1f6e216f5dcb7e7b8ef9626634c29cf9)
 
-FetchContent_GetProperties(jinja2cpp)
-if(NOT jinja2cpp_POPULATED)
-  FetchContent_Populate(jinja2cpp)
-  file(COPY "${CMAKE_CURRENT_LIST_DIR}/patches/jinja2cpp/thirdparty" DESTINATION "${jinja2cpp_SOURCE_DIR}/")
-  file(COPY "${CMAKE_CURRENT_LIST_DIR}/patches/jinja2cpp/cmake" DESTINATION "${jinja2cpp_SOURCE_DIR}/")
-  add_subdirectory(${jinja2cpp_SOURCE_DIR} ${jinja2cpp_BINARY_DIR} EXCLUDE_FROM_ALL)
-  if(USING_JINJA2CPP)
+  FetchContent_GetProperties(jinja2cpp)
+  if(NOT jinja2cpp_POPULATED)
+    FetchContent_Populate(jinja2cpp)
+    file(COPY "${CMAKE_CURRENT_LIST_DIR}/patches/jinja2cpp/thirdparty" DESTINATION "${jinja2cpp_SOURCE_DIR}/")
+    file(COPY "${CMAKE_CURRENT_LIST_DIR}/patches/jinja2cpp/cmake" DESTINATION "${jinja2cpp_SOURCE_DIR}/")
+    add_subdirectory(${jinja2cpp_SOURCE_DIR} ${jinja2cpp_BINARY_DIR} EXCLUDE_FROM_ALL)
     add_compile_definitions("SUBCONVERTER_USE_JINJA2CPP")
   endif()
 endif()
@@ -394,7 +419,7 @@ if(MINGW)
 
     function(mingw_bundle_dll target_name)
       add_custom_target(${target_name}-deps ALL
-          COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH=${MINGW_BUNDLEDLLS_SEARCH_PATH} -- "${Python3_EXECUTABLE}" "${mingw_bundledlls_SOURCE_DIR}/mingw-bundledlls" -l "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/dependencies.log" --force --copy "$<TARGET_FILE:${target_name}>"
+          COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH=${MINGW_BUNDLEDLLS_SEARCH_PATH} "${Python3_EXECUTABLE}" "${mingw_bundledlls_SOURCE_DIR}/mingw-bundledlls" -l "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/dependencies.log" --force --copy "$<TARGET_FILE:${target_name}>"
           WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
           DEPENDS ${target_name}
           COMMENT "Copying MinGW libs ..."

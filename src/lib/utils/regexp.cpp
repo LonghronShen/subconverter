@@ -1,16 +1,13 @@
 #include <string>
 #include <stdarg.h>
 
-/*
 #ifdef USE_STD_REGEX
 #include <regex>
 #else
-*/
 #include <jpcre2.hpp>
 using jp = jpcre2::select<char>;
-//#endif // USE_STD_REGEX
+#endif // USE_STD_REGEX
 
-/*
 #ifdef USE_STD_REGEX
 bool regValid(const std::string &reg)
 {
@@ -45,8 +42,9 @@ bool regFind(const std::string &src, const std::string &match)
     }
 }
 
-std::string regReplace(const std::string &src, const std::string &match, const std::string &rep)
+std::string regReplace(const std::string &src, const std::string &match, const std::string &rep, bool global, bool multiline)
 {
+    (void)multiline;
     std::string result = "";
     try
     {
@@ -58,7 +56,10 @@ std::string regReplace(const std::string &src, const std::string &match, const s
             flags |= std::regex::icase;
         }
         std::regex reg(target, flags);
-        regex_replace(back_inserter(result), src.begin(), src.end(), reg, rep);
+        if(global)
+            result = std::regex_replace(src, reg, rep);
+        else
+            result = std::regex_replace(src, reg, rep, std::regex_constants::format_first_only);
     }
     catch (std::regex_error &e)
     {
@@ -128,7 +129,6 @@ int regGetMatch(const std::string &src, const std::string &match, size_t group_c
 }
 
 #else
-*/
 bool regMatch(const std::string &src, const std::string &match)
 {
     jp::Regex reg;
@@ -194,7 +194,7 @@ int regGetMatch(const std::string &src, const std::string &match, size_t group_c
     return 0;
 }
 
-//#endif // USE_STD_REGEX
+#endif // USE_STD_REGEX
 
 std::string regTrim(const std::string &src)
 {

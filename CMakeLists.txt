@@ -13,11 +13,13 @@ set(BUILD_TARGET_NAME ${project_name})
 
 project(${project_name} C CXX)
 
-if(CMAKE_COMPILER_IS_GNUCC)
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.4)
-    message(FATAL_ERROR "GCC ${CMAKE_CXX_COMPILER_VERSION} is not supported.")
-  endif()
-endif()
+# local probing override for gcc-for-Windows98/subconverter stress validation:
+# allow newer GCC so we can reach the real backend/configure blockers.
+# if(CMAKE_COMPILER_IS_GNUCC)
+#   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.4)
+#     message(FATAL_ERROR "GCC ${CMAKE_CXX_COMPILER_VERSION} is not supported.")
+#   endif()
+# endif()
 
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "Set to 11 or 14 to enable C++11 or C++17 builds, respectively." FORCE)
 set(CMAKE_C_STANDARD 11 CACHE STRING "Set to 99 or 11 to enable C99 or C11 builds, respectively." FORCE)
@@ -47,6 +49,10 @@ option(USING_MALLOC_TRIM "Call malloc_trim after processing request to lower mem
 # now using internal MD5 calculation
 option(USING_MBEDTLS "Use mbedTLS instead of OpenSSL for MD5 calculation." OFF)
 option(BUILD_STATIC_LIBRARY "Build a static library containing only the essential part." OFF)
+
+set(SUBCONVERTER_WEBSERVER_BACKEND "libevent" CACHE STRING "WebServer backend: libevent or kleinshttp")
+set_property(CACHE SUBCONVERTER_WEBSERVER_BACKEND PROPERTY STRINGS libevent kleinshttp)
+include(ValidateWebServerBackend)
 
 add_subdirectory(assets)
 

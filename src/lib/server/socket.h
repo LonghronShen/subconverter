@@ -5,6 +5,7 @@
 #ifndef WINVER
 #define WINVER 0x0501
 #endif // WINVER
+#include <cstring>
 #include <ws2tcpip.h>
 #include <winsock2.h>
 #else

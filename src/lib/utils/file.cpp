@@ -1,8 +1,13 @@
+#include <cstdio>
 #include <string>
-#include <fstream>
 #include <filesystem>
 
 #include <sys/stat.h>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 #include "string.h"
 
@@ -77,25 +82,44 @@ bool fileExist(const std::string &path, bool scope_limit)
 
 bool fileCopy(const std::string &source, const std::string &dest)
 {
-    std::ifstream infile;
-    std::ofstream outfile;
-    infile.open(source, std::ios::binary);
-    if(!infile)
+    std::FILE *src = std::fopen(source.c_str(), "rb");
+    if(!src)
         return false;
-    outfile.open(dest, std::ios::binary);
-    if(!outfile)
-        return false;
-    try
+
+    std::FILE *dst = std::fopen(dest.c_str(), "wb");
+    if(!dst)
     {
-        outfile<<infile.rdbuf();
-    }
-    catch (std::exception &e)
-    {
+        std::fclose(src);
         return false;
     }
-    infile.close();
-    outfile.close();
-    return true;
+
+    char buffer[8192];
+    bool ok = true;
+    while(true)
+    {
+        size_t n = std::fread(buffer, 1, sizeof(buffer), src);
+        if(n > 0)
+        {
+            if(std::fwrite(buffer, 1, n, dst) != n)
+            {
+                ok = false;
+                break;
+            }
+        }
+        if(n < sizeof(buffer))
+        {
+            if(std::ferror(src))
+                ok = false;
+            break;
+        }
+    }
+
+    if(std::fclose(src) != 0)
+        ok = false;
+    if(std::fclose(dst) != 0)
+        ok = false;
+
+    return ok;
 }
 
 int fileWrite(const std::string &path, const std::string &content, bool overwrite)

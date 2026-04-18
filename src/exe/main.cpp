@@ -1,7 +1,9 @@
+#include <cstdio>
 #include <iostream>
 #include <string>
 #include <unistd.h>
 #include <signal.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -35,7 +37,7 @@ void SetConsoleTitle(const std::string &title)
 
 void setcd(std::string &file)
 {
-    char szTemp[1024] = {}, filename[256] = {};
+    char szTemp[PATH_MAX] = {}, filename[PATH_MAX] = {};
     std::string path;
 #ifdef _WIN32
     char *pname = NULL;
@@ -113,12 +115,22 @@ void cron_tick_caller()
         cron_tick();
 }
 
+static void startup_probe(const std::string &mark)
+{
+    std::fprintf(stderr, "[startup-probe] %s\n", mark.c_str());
+    std::fflush(stderr);
+}
+
 int main(int argc, char *argv[])
 {
+    startup_probe("main-enter");
 #ifndef _DEBUG
     std::string prgpath = argv[0];
+    startup_probe("before-setcd-prgpath path=" + prgpath);
     setcd(prgpath); //first switch to program directory
+    startup_probe("after-setcd-prgpath file=" + prgpath);
 #endif // _DEBUG
+    startup_probe("before-pref-detect cwd-phase");
     if(fileExist("pref.toml"))
         global.prefPath = "pref.toml";
     else if(fileExist("pref.yml"))
@@ -127,19 +139,36 @@ int main(int argc, char *argv[])
     {
         if(fileExist("pref.example.toml"))
         {
-            fileCopy("pref.example.toml", "pref.toml");
+            startup_probe("before-copy-pref-example-toml");
+            bool copied = fileCopy("pref.example.toml", "pref.toml");
+            startup_probe(std::string("after-copy-pref-example-toml copied=") + (copied ? "true" : "false"));
             global.prefPath = "pref.toml";
+            startup_probe("after-assign-prefPath-toml");
         }
         else if(fileExist("pref.example.yml"))
         {
-            fileCopy("pref.example.yml", "pref.yml");
+            startup_probe("before-copy-pref-example-yml");
+            bool copied = fileCopy("pref.example.yml", "pref.yml");
+            startup_probe(std::string("after-copy-pref-example-yml copied=") + (copied ? "true" : "false"));
             global.prefPath = "pref.yml";
+            startup_probe("after-assign-prefPath-yml");
         }
         else if(fileExist("pref.example.ini"))
-            fileCopy("pref.example.ini", "pref.ini");
+        {
+            startup_probe("before-copy-pref-example-ini");
+            bool copied = fileCopy("pref.example.ini", "pref.ini");
+            startup_probe(std::string("after-copy-pref-example-ini copied=") + (copied ? "true" : "false"));
+        }
+        else
+            startup_probe("no-pref-example-found");
     }
+    startup_probe("after-pref-detect prefPath=" + global.prefPath);
+    startup_probe("before-chkArg");
     chkArg(argc, argv);
+    startup_probe("after-chkArg prefPath=" + global.prefPath);
+    startup_probe("before-setcd-prefPath path=" + global.prefPath);
     setcd(global.prefPath); //then switch to pref directory
+    startup_probe("after-setcd-prefPath file=" + global.prefPath);
     writeLog(0, "SubConverter " VERSION " starting up..", LOG_LEVEL_INFO);
 #ifdef _WIN32
     WSADATA wsaData;

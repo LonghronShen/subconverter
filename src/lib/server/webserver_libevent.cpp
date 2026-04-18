@@ -1,27 +1,19 @@
 #include <memory>
 #include <cstdint>
 #include <iostream>
+#include <functional>
+#include <thread>
+#include <algorithm>
+#include <string.h>
+
 #include <evhttp.h>
-#include <atomic>
+#include <pthread.h>
 #ifdef MALLOC_TRIM
 #include <malloc.h>
 #endif // MALLOC_TRIM
 
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <string.h>
-#include <thread>
-#include <functional>
-
-#include <pthread.h>
-
 #include "../utils/base64/base64.h"
-#include "../utils/file_extra.h"
 #include "../utils/logger.h"
-#include "../utils/stl_extra.h"
-#include "../utils/string.h"
 #include "../utils/urlencode.h"
 #include "socket.h"
 #include "webserver.h"
@@ -43,68 +35,6 @@ auto *wrap(Lambda &&func)
     return deduced_wrap<Lambda>(std::function{func});
 }
 
-struct MIME_type
-{
-    std::string extension;
-    std::string mimetype;
-};
-
-MIME_type mime_types[] = {{"html htm shtml","text/html"},
-                          {"css",           "text/css"},
-                          {"jpeg jpg",      "image/jpeg"},
-                          {"js",            "application/javascript"},
-                          {"txt",           "text/plain"},
-                          {"png",           "image/png"},
-                          {"ico",           "image/x-icon"},
-                          {"svg svgz",      "image/svg+xml"},
-                          {"woff",          "application/font-woff"},
-                          {"json",          "application/json"}};
-
-bool matchSpaceSeparatedList(const std::string& source, const std::string &target)
-{
-    string_size pos_begin = 0, pos_end, total = source.size();
-    while(pos_begin < total)
-    {
-        pos_end = source.find(' ', pos_begin);
-        if(pos_end == source.npos)
-            pos_end = total;
-        if(source.compare(pos_begin, pos_end - pos_begin, target) == 0)
-            return true;
-        pos_begin = pos_end + 1;
-    }
-    return false;
-}
-
-std::string checkMIMEType(const std::string &filename)
-{
-    string_size name_begin = 0, name_end = 0;
-    name_begin = filename.rfind('/');
-    if(name_begin == filename.npos)
-        name_begin = 0;
-    name_end = filename.rfind('.');
-    if(name_end == filename.npos || name_end < name_begin || name_end == filename.size() - 1)
-        return "application/octet-stream";
-    std::string extension = filename.substr(name_end + 1);
-    for(MIME_type &x : mime_types)
-        if(matchSpaceSeparatedList(x.extension, extension))
-            return x.mimetype;
-    return "application/octet-stream";
-}
-
-int WebServer::serveFile(const std::string &filename, std::string &content_type, std::string &return_data)
-{
-    std::string realname = serve_file_root + filename;
-    if(filename.compare("/") == 0)
-        realname += "index.html";
-    if(!fileExist(realname))
-        return 1;
-
-    return_data = fileGet(realname, false);
-    content_type = checkMIMEType(realname);
-    writeLog(0, "file-server: serving '" + filename + "' type '" + content_type + "'", LOG_LEVEL_INFO);
-    return 0;
-}
-
 const char *request_header_blacklist[] = {"host", "accept", "accept-encoding"};
 
 static inline void buffer_cleanup(struct evbuffer *eb)
@@ -116,76 +46,10 @@ static inline void buffer_cleanup(struct evbuffer *eb)
 #endif // MALLOC_TRIM
 }
 
-inline int WebServer::process_request(Request &request, Response &response, std::string &return_data)
-{
-    writeLog(0, "handle_cmd:    " + request.method + " handle_uri:    " + request.url, LOG_LEVEL_VERBOSE);
-
-    string_size pos = request.url.find("?");
-    if(pos != request.url.npos)
-    {
-        request.argument = request.url.substr(pos + 1);
-        request.url.erase(pos);
-    }
-
-    if(request.method == "OPTIONS")
-    {
-        for(responseRoute &x : responses)
-            if(matchSpaceSeparatedList(replaceAllDistinct(request.postdata, ",", ""), x.method) && x.path == request.url)
-                return 1;
-        return -1;
-    }
-
-    for(responseRoute &x : responses)
-    {
-        if(x.method == request.method && x.path == request.url)
-        {
-            response_callback &rc = x.rc;
-            try
-            {
-                return_data = rc(request, response);
-                response.content_type = x.content_type;
-            }
-            catch(std::exception &e)
-            {
-                return_data = "Internal server error while processing request path '" + request.url + "' with arguments '" + request.argument + "'!";
-                return_data += "\n  exception: ";
-                return_data += type(e);
-                return_data += "\n  what(): ";
-                return_data += e.what();
-                response.content_type = "text/plain";
-                response.status_code = 500;
-                writeLog(0, return_data, LOG_LEVEL_ERROR);
-            }
-            return 0;
-        }
-    }
-
-    auto iter = redirect_map.find(request.url);
-    if(iter != redirect_map.end())
-    {
-        return_data = iter->second;
-        if(request.argument.size())
-        {
-            if(return_data.find("?") != return_data.npos)
-                return_data += "&" + request.argument;
-            else
-                return_data += "?" + request.argument;
-        }
-        return 2;
-    }
-
-    if(serve_file)
-    {
-        if(request.method.compare("GET") == 0 && serveFile(request.url, response.content_type, return_data) == 0)
-            return 0;
-    }
-
-    return -1;
-}
-
-void WebServer::on_request(evhttp_request *req, void *args)
+void WebServer::on_request(void *req_ptr, void *args)
 {
     (void)args;
+    auto *req = reinterpret_cast<evhttp_request*>(req_ptr);
     static std::string auth_token = "Basic " + base64Encode(auth_user + ":" + auth_password);
     const char *req_content_type = evhttp_find_header(req->input_headers, "Content-Type"), *req_ac_method = evhttp_find_header(req->input_headers, "Access-Control-Request-Method");
     const char *uri = req->uri, *internal_flag = evhttp_find_header(req->input_headers, "SubConverter-Request");
@@ -318,7 +182,7 @@ int WebServer::start_web_server(void *argv)
         return -1;
     }
 
-    auto call_on_request = [&](evhttp_request *req, void *args) { on_request(req, args); };
+    auto call_on_request = [&](evhttp_request *req, void *args) { on_request(reinterpret_cast<void*>(req), args); };
 
     evhttp_set_allowed_methods(server.get(), EVHTTP_REQ_GET | EVHTTP_REQ_POST | EVHTTP_REQ_OPTIONS | EVHTTP_REQ_PUT | EVHTTP_REQ_PATCH | EVHTTP_REQ_DELETE | EVHTTP_REQ_HEAD);
     evhttp_set_gencb(server.get(), wrap(call_on_request), nullptr);
@@ -385,7 +249,7 @@ int WebServer::start_web_server_multi(void *argv)
     std::string listen_address = args->listen_address;
     int port = args->port, nthreads = args->max_workers, max_conn = args->max_conn;
 
-    auto call_on_request = [&](evhttp_request *req, void *args) { on_request(req, args); };
+    auto call_on_request = [&](evhttp_request *req, void *args) { on_request(reinterpret_cast<void*>(req), args); };
 
     int nfd = httpserver_bindsocket(listen_address, port, max_conn);
     if (nfd < 0)
@@ -426,27 +290,3 @@ int WebServer::start_web_server_multi(void *argv)
     return 0;
 }
 
-void WebServer::stop_web_server()
-{
-    SERVER_EXIT_FLAG = true;
-}
-
-void WebServer::append_response(const std::string &method, const std::string &uri, const std::string &content_type, response_callback response)
-{
-    responseRoute rr;
-    rr.method = method;
-    rr.path = uri;
-    rr.content_type = content_type;
-    rr.rc = response;
-    responses.emplace_back(std::move(rr));
-}
-
-void WebServer::append_redirect(const std::string &uri, const std::string &target)
-{
-    redirect_map[uri] = target;
-}
-
-void WebServer::reset_redirect()
-{
-    eraseElements(redirect_map);
-}

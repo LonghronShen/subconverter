@@ -3,8 +3,8 @@
 #include <map>
 #include <sstream>
 #include <filesystem>
+#include <string_view>
 #include <inja/inja.hpp>
-#include <nonstd/string_view.hpp>
 #include <nlohmann/json.hpp>
 
 #include "../../handler/interfaces.h"
@@ -19,7 +19,7 @@
 
 namespace inja
 {
-    void convert_dot_to_json_pointer(nonstd::string_view dot, std::string& out)
+    void convert_dot_to_json_pointer(std::string_view dot, std::string& out)
     {
         out = DataNode::convert_dot_to_ptr(dot);
     }
