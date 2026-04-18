@@ -1,0 +1,57 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1015,7 +1015,6 @@
+       list(APPEND CMAKE_REQUIRED_LIBRARIES ZLIB::ZLIB)
+     endif()
+     if(WIN32)
+-      list(APPEND CMAKE_REQUIRED_LIBRARIES "bcrypt")  # for OpenSSL/LibreSSL BCryptGenRandom()
+     endif()
+   endif()
+   if(USE_WOLFSSL)
+@@ -1827,10 +1827,9 @@
+   if(NOT WINDOWS_STORE)
+     list(APPEND CURL_NETWORK_AND_TIME_LIBS "iphlpapi")  # for if_nametoindex()
+   endif()
+-  list(APPEND CURL_LIBS "bcrypt")  # for BCryptGenRandom()
+ 
+   # We use crypto functions that are not available for UWP apps
+-  if(NOT WINDOWS_STORE)
++  if(NOT WINDOWS_STORE AND NOT DEFINED USE_WIN32_CRYPTO)
+     set(USE_WIN32_CRYPTO ON)
+   endif()
+ 
+@@ -1842,6 +1841,7 @@
+     # for Cert*() in openssl.c Native CA, Schannel
+     # for CryptDecodeObjectEx(), CryptQueryObject(), CryptStringToBinary(), PFXImportCertStore() in Schannel
+     list(APPEND CURL_LIBS "crypt32")
++    list(APPEND CURL_LIBS "bcrypt")  # for BCryptGenRandom()
+   endif()
+ 
+--- a/lib/rand.c
++++ b/lib/rand.c
+@@ -34,7 +34,9 @@
+ #include "escape.h"
+ 
+ #ifdef _WIN32
++#ifdef USE_WIN32_CRYPTO
+ #include <bcrypt.h>
++#endif
+ #ifdef _MSC_VER
+ #  pragma comment(lib, "bcrypt.lib")
+ #endif
+@@ -45,11 +47,15 @@
+ CURLcode Curl_win32_random(unsigned char *entropy, size_t length)
+ {
+   memset(entropy, 0, length);
+ 
++#ifdef USE_WIN32_CRYPTO
+   if(BCryptGenRandom(NULL, entropy, (ULONG)length,
+                      BCRYPT_USE_SYSTEM_PREFERRED_RNG) != STATUS_SUCCESS)
+     return CURLE_FAILED_INIT;
+ 
+   return CURLE_OK;
++#else
++  return CURLE_NOT_BUILT_IN;
++#endif
+ }
+ #endif
