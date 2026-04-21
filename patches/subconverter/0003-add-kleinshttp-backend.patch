@@ -1,0 +1,168 @@
+commit 0093596c88141875f7fb0a25f7b0cb21db90de1e
+Author: LonghronShen <LonghronShen@hotmail.com>
+Date:   Sat Apr 18 13:15:11 2026 +0000
+
+    feat(phase-a): implement kleinsHTTP backend split and startup crash workarounds
+
+diff --git a/cmake/KleinsHTTP.cmake b/cmake/KleinsHTTP.cmake
+new file mode 100644
+index 0000000..fe20056
+--- /dev/null
++++ b/cmake/KleinsHTTP.cmake
+@@ -0,0 +1,28 @@
++set(SUBCONVERTER_KLEINSHTTP_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../third_party/kleinsHTTP" CACHE PATH "Path to local kleinsHTTP source tree for host-side probing")
++
++if(NOT EXISTS "${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/httpServer/httpServer.cpp")
++  message(FATAL_ERROR "kleinsHTTP source tree not found at ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}")
++endif()
++
++add_library(subconverter_kleinshttp STATIC
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/httpParser/httpParser.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/httpServer/httpServer.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/socketBase/socketBase.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/packet/packet.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/tcpSocket/tcpSocket.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/sessionBase/sessionBase.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/tcpConnection/tcpConnection.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/connectionBase/connectionBase.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/metricsServer/metricsServer.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/metricBase/metricBase.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/counterMetric/counterMetric.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/histogramMetric/histogramMetric.cpp
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source/gaugeMetric/gaugeMetric.cpp
++)
++
++target_include_directories(subconverter_kleinshttp PUBLIC
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}/source
++  ${SUBCONVERTER_KLEINSHTTP_SOURCE_DIR}
++)
++
++target_compile_features(subconverter_kleinshttp PUBLIC cxx_std_17)
+diff --git a/src/lib/server/webserver_kleinshttp.cpp b/src/lib/server/webserver_kleinshttp.cpp
+new file mode 100644
+index 0000000..ff29b8f
+--- /dev/null
++++ b/src/lib/server/webserver_kleinshttp.cpp
+@@ -0,0 +1,122 @@
++#include "webserver.h"
++
++#include <chrono>
++#include <list>
++#include <string>
++#include <thread>
++
++#include <httpParser/httpParser.h>
++#include <httpServer/httpServer.h>
++#include <tcpSocket/tcpSocket.h>
++
++#include "../utils/logger.h"
++
++namespace {
++kleins::httpMethod to_kleins_method(const std::string& method)
++{
++    if(method == "GET") return kleins::httpMethod::GET;
++    if(method == "HEAD") return kleins::httpMethod::HEAD;
++    if(method == "POST") return kleins::httpMethod::POST;
++    if(method == "PUT") return kleins::httpMethod::PUT;
++    if(method == "DELETE") return kleins::httpMethod::HTTP_DELETE;
++    if(method == "CONNECT") return kleins::httpMethod::CONNECT;
++    if(method == "OPTIONS") return kleins::httpMethod::OPTIONS;
++    if(method == "TRACE") return kleins::httpMethod::TRACE;
++    return kleins::httpMethod::PATCH;
++}
++
++std::string build_argument_string(const std::map<std::string, std::string>& parameters)
++{
++    std::string out;
++    bool first = true;
++    for(const auto& kv : parameters)
++    {
++        if(!first)
++            out += "&";
++        first = false;
++        out += kv.first;
++        if(!kv.second.empty())
++            out += "=" + kv.second;
++    }
++    return out;
++}
++
++std::list<std::string> make_response_headers(const Response& response)
++{
++    std::list<std::string> headers;
++    for(const auto& kv : response.headers)
++        headers.emplace_back(kv.first + ": " + kv.second);
++    headers.emplace_back("Access-Control-Allow-Origin: *");
++    headers.emplace_back("Connection: close");
++    return headers;
++}
++}
++
++int WebServer::start_web_server(void *argv)
++{
++    auto *args = reinterpret_cast<listener_args*>(argv);
++    kleins::httpServer server;
++
++    if(!server.addSocket(new kleins::tcpSocket(args->listen_address.c_str(), args->port)))
++    {
++        writeLog(0, "Failed to init kleinsHTTP server socket.", LOG_LEVEL_FATAL);
++        return -1;
++    }
++
++    server.on(kleins::httpMethod::GET, "/healthz", [](kleins::httpParser* parser) {
++        parser->respond("200", {}, "OK", "text/plain");
++    });
++
++    for(const auto& route : responses)
++    {
++        server.on(to_kleins_method(route.method), route.path, [this](kleins::httpParser* parser) {
++            Request request;
++            Response response;
++            std::string body;
++
++            request.method = parser->method;
++            request.url = parser->path;
++            request.argument = build_argument_string(parser->parameters);
++            request.postdata = parser->body;
++            for(const auto& kv : parser->headers)
++                request.headers.emplace(kv.first, kv.second);
++
++            int rc = process_request(request, response, body);
++            auto headers = make_response_headers(response);
++            const std::string content_type = response.content_type.empty() ? "text/plain" : response.content_type;
++
++            switch(rc)
++            {
++            case 2:
++                headers.emplace_back("Location: " + body);
++                parser->respond("302", headers, "", "text/plain");
++                break;
++            case 1:
++                headers.emplace_back("Access-Control-Allow-Headers: *");
++                parser->respond(std::to_string(response.status_code), headers, "", content_type);
++                break;
++            case 0:
++                parser->respond(std::to_string(response.status_code), headers, body, content_type);
++                break;
++            case -1:
++            default:
++                parser->respond("404", headers, "File not found.", "text/plain");
++                break;
++            }
++        });
++    }
++
++    while(!SERVER_EXIT_FLAG.load())
++    {
++        if(args->looper_callback)
++            args->looper_callback();
++        std::this_thread::sleep_for(std::chrono::milliseconds(args->looper_interval));
++    }
++
++    return 0;
++}
++
++int WebServer::start_web_server_multi(void *argv)
++{
++    return start_web_server(argv);
++}
