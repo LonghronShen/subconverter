@@ -18,7 +18,7 @@ kleins::httpMethod to_kleins_method(const std::string& method)
     if(method == "HEAD") return kleins::httpMethod::HEAD;
     if(method == "POST") return kleins::httpMethod::POST;
     if(method == "PUT") return kleins::httpMethod::PUT;
-    if(method == "DELETE") return kleins::httpMethod::HTTP_DELETE;
+    if(method == "DELETE") return kleins::httpMethod::DELETE;
     if(method == "CONNECT") return kleins::httpMethod::CONNECT;
     if(method == "OPTIONS") return kleins::httpMethod::OPTIONS;
     if(method == "TRACE") return kleins::httpMethod::TRACE;

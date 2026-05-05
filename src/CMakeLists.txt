@@ -97,7 +97,7 @@ if(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "libevent")
     endif()
 elseif(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "kleinshttp")
     target_link_libraries(${BUILD_TARGET_NAME}-lib
-        PUBLIC subconverter_kleinshttp
+        PUBLIC kleinsHTTP-static
     )
 endif()
 
