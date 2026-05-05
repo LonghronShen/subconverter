@@ -5,6 +5,9 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   linux_multi_arch_build:
     # The host should always be linux
@@ -28,10 +31,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: uraimo/run-on-arch-action@v2
+      - uses: uraimo/run-on-arch-action@v3
         name: Run commands
         id: runcmd
         with:
@@ -84,7 +87,7 @@ jobs:
 
             uname -a
 
-            echo ::set-output name=uname::$(uname -a)
+            echo "uname=$(uname -a)" >> "$GITHUB_OUTPUT"
 
             git config --global --add safe.directory '*'
 
@@ -92,7 +95,7 @@ jobs:
             export CXX=/usr/bin/g++-8
             bash ./scripts/build.sh
       - name: Upload
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v7
         with:
           name: subconverter_${{ matrix.arch }}
           path: subconverter/
@@ -100,7 +103,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: tar czf subconverter_${{ matrix.arch }}.tar.gz subconverter
       - name: Draft Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: subconverter_${{ matrix.arch }}.tar.gz
@@ -128,7 +131,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: LonghronShen/run-on-arch-action@master
@@ -162,14 +165,14 @@ jobs:
 
             uname -a
 
-            echo ::set-output name=uname::$(uname -a)
+            echo "uname=$(uname -a)" >> "$GITHUB_OUTPUT"
 
             git config --global --add safe.directory '*'
 
             source /opt/bin/gcc_env.sh
             bash ./scripts/build.sh
       - name: Upload
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v7
         with:
           name: subconverter_${{ matrix.distro }}_${{ matrix.arch }}
           path: subconverter/
@@ -177,7 +180,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: tar czf subconverter_${{ matrix.distro }}_${{ matrix.arch }}.tar.gz subconverter
       - name: Draft Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: subconverter_${{ matrix.distro }}_${{ matrix.arch }}.tar.gz
@@ -188,13 +191,13 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Build
         run: cd scripts && ./build.macos.release.sh
       - name: Upload
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v7
         with:
           name: subconverter_darwin64
           path: subconverter/
@@ -202,7 +205,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: tar czf subconverter_darwin64.tar.gz subconverter
       - name: Draft Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: subconverter_darwin64.tar.gz
@@ -225,7 +228,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: msys2/setup-msys2@v2
@@ -247,7 +250,7 @@ jobs:
       - name: Build
         run: cd scripts && bash ./build.windows.release.sh
       - name: Upload
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v7
         with:
           name: subconverter_${{ matrix.name }}
           path: subconverter/
@@ -255,10 +258,44 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: 7z a subconverter_${{ matrix.name }}.7z subconverter/
       - name: Draft Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: subconverter_${{ matrix.name }}.7z
+          draft: true
+
+  legacy_win32_build:
+    name: Legacy Win32 Build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        run: |
+          chmod +x ./scripts/build.legacy-win32.sh
+          ./scripts/build.legacy-win32.sh
+
+      - name: Upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: subconverter_legacy_win32
+          path: subconverter/
+
+      - name: Package Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: tar czf subconverter_legacy_win32.tar.gz subconverter
+
+      - name: Draft Release
+        uses: softprops/action-gh-release@v3
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: subconverter_legacy_win32.tar.gz
           draft: true
 
   build_win_msvc:
@@ -284,18 +321,18 @@ jobs:
       VCPKG_TARGET_TRIPLET: "${{ matrix.triplet }}"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
         run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
         shell: bash
 
-      - uses: lukka/get-cmake@latest
+      - uses: lukka/get-cmake@v4.3.2
 
       # Restore both vcpkg and its artifacts from the GitHub cache service.
       - name: Restore vcpkg and its artifacts.
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           # The first path is the location of vcpkg: it contains the vcpkg executable and data files, as long as the
           # built package archives (aka binary cache) which are located by VCPKG_DEFAULT_BINARY_CACHE env var.
@@ -329,7 +366,7 @@ jobs:
           cmake --build --preset ninja-multi-vcpkg-release
 
       - name: Upload
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v7
         with:
           name: subconverter_${{ matrix.name }}
           path: builds/ninja-multi-vcpkg/bin/
@@ -339,7 +376,7 @@ jobs:
         run: 7z a subconverter_${{ matrix.name }}.7z builds/ninja-multi-vcpkg/bin/
 
       - name: Draft Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: subconverter_${{ matrix.name }}.7z
