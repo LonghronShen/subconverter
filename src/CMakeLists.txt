@@ -10,6 +10,7 @@ file(GLOB_RECURSE src
 list(REMOVE_ITEM src
     ${CMAKE_CURRENT_LIST_DIR}/lib/server/webserver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/lib/server/webserver_libevent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/lib/server/webserver_kleinshttp.cpp
 )
 
 set(WEBSERVER_BACKEND_SRC "")
@@ -87,8 +88,12 @@ if(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "libevent")
         target_link_libraries(${BUILD_TARGET_NAME}-lib
             PUBLIC event_core
             PUBLIC event_extra
-            PUBLIC event_openssl
         )
+        if(NOT EVENT__DISABLE_OPENSSL)
+            target_link_libraries(${BUILD_TARGET_NAME}-lib
+                PUBLIC event_openssl
+            )
+        endif()
     endif()
 elseif(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "kleinshttp")
     target_link_libraries(${BUILD_TARGET_NAME}-lib

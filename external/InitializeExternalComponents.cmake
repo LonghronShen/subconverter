@@ -92,7 +92,6 @@ if(MSVC)
 endif()
 
 # boost-cmake
-# local probing override for Phase A:
 # Boost appears to be template-engine related, not a hard webserver/backend requirement.
 # Only resolve/fetch it when Jinja2Cpp is explicitly enabled.
 if(USING_JINJA2CPP)
@@ -227,7 +226,39 @@ if(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "libevent")
   endif()
 elseif(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "kleinshttp")
   message(STATUS "WebServer backend selected: kleinshttp")
-  include(KleinsHTTP)
+  
+  # kleinshttp
+  FetchContent_Declare(kleinshttp
+    GIT_REPOSITORY https://github.com/kleinschrader/kleinsHTTP.git
+    GIT_TAG main)
+  
+  FetchContent_GetProperties(kleinshttp)
+  if(NOT kleinshttp_POPULATED)
+    FetchContent_Populate(kleinshttp)
+
+    add_library(kleinsHTTP-static STATIC
+      ${kleinshttp_SOURCE_DIR}/source/httpParser/httpParser.cpp
+      ${kleinshttp_SOURCE_DIR}/source/httpServer/httpServer.cpp
+      ${kleinshttp_SOURCE_DIR}/source/socketBase/socketBase.cpp
+      ${kleinshttp_SOURCE_DIR}/source/packet/packet.cpp
+      ${kleinshttp_SOURCE_DIR}/source/tcpSocket/tcpSocket.cpp
+      ${kleinshttp_SOURCE_DIR}/source/sessionBase/sessionBase.cpp
+      ${kleinshttp_SOURCE_DIR}/source/tcpConnection/tcpConnection.cpp
+      ${kleinshttp_SOURCE_DIR}/source/connectionBase/connectionBase.cpp
+      ${kleinshttp_SOURCE_DIR}/source/metricsServer/metricsServer.cpp
+      ${kleinshttp_SOURCE_DIR}/source/metricBase/metricBase.cpp
+      ${kleinshttp_SOURCE_DIR}/source/counterMetric/counterMetric.cpp
+      ${kleinshttp_SOURCE_DIR}/source/histogramMetric/histogramMetric.cpp
+      ${kleinshttp_SOURCE_DIR}/source/gaugeMetric/gaugeMetric.cpp
+    )
+
+    target_include_directories(kleinsHTTP-static PUBLIC
+      ${kleinshttp_SOURCE_DIR}/source
+      ${kleinshttp_SOURCE_DIR}
+    )
+
+    target_compile_features(kleinsHTTP-static PUBLIC cxx_std_17)
+  endif()
 endif()
 
 

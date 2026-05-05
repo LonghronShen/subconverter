@@ -13,8 +13,6 @@ set(BUILD_TARGET_NAME ${project_name})
 
 project(${project_name} C CXX)
 
-# local probing override for gcc-for-Windows98/subconverter stress validation:
-# allow newer GCC so we can reach the real backend/configure blockers.
 # if(CMAKE_COMPILER_IS_GNUCC)
 #   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.4)
 #     message(FATAL_ERROR "GCC ${CMAKE_CXX_COMPILER_VERSION} is not supported.")
@@ -52,7 +50,10 @@ option(BUILD_STATIC_LIBRARY "Build a static library containing only the essentia
 
 set(SUBCONVERTER_WEBSERVER_BACKEND "libevent" CACHE STRING "WebServer backend: libevent or kleinshttp")
 set_property(CACHE SUBCONVERTER_WEBSERVER_BACKEND PROPERTY STRINGS libevent kleinshttp)
-include(ValidateWebServerBackend)
+
+if(NOT SUBCONVERTER_WEBSERVER_BACKEND MATCHES "^(libevent|kleinshttp)$")
+  message(FATAL_ERROR "SUBCONVERTER_WEBSERVER_BACKEND must be libevent or kleinshttp")
+endif()
 
 add_subdirectory(assets)
 

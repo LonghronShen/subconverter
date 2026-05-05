@@ -2,6 +2,7 @@
 #define PROXY_H_INCLUDED
 
 #include <string>
+#include <cstdint>
 
 #include "../../utils/tribool.h"
 
