@@ -2,8 +2,7 @@
 
 set -xe
 
-brew install libevent zlib pcre2 pkgconfig openssl boost icu4c ninja
-brew link --force openssl boost pcre2 libevent icu4c
+./bootstrap.sh
 
 alias nproc="sysctl -n hw.logicalcpu"
 

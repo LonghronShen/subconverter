@@ -1,0 +1,14 @@
+services:
+  legacy_win32_builder:
+    image: longhronshens/gcc-win98-consumer:11.1.0
+    working_dir: /workspace
+    environment:
+      - TARGET=${TARGET:-i686-w64-mingw32}
+      - CROSS_PREFIX=/opt/cross-toolset
+      - NATIVE_PREFIX=/opt/native-toolset
+      - TOOLCHAIN_KIND=cross
+      - PATH=/opt/cross-toolset/bin:/opt/native-toolset/bin:${PATH}
+    volumes:
+      - ./:/workspace
+    tty: true
+    stdin_open: true

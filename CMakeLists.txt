@@ -48,7 +48,13 @@ option(USING_MALLOC_TRIM "Call malloc_trim after processing request to lower mem
 option(USING_MBEDTLS "Use mbedTLS instead of OpenSSL for MD5 calculation." OFF)
 option(BUILD_STATIC_LIBRARY "Build a static library containing only the essential part." OFF)
 
-set(SUBCONVERTER_WEBSERVER_BACKEND "libevent" CACHE STRING "WebServer backend: libevent or kleinshttp")
+# if env:TOOLCHAIN_KIND is set, it means that we are running in the consumer container, and we should use the kleinshttp backend since libevent is not available in the container.
+if(DEFINED ENV{TOOLCHAIN_KIND})
+  set(SUBCONVERTER_WEBSERVER_BACKEND "kleinshttp" CACHE STRING "WebServer backend: libevent or kleinshttp")
+else()
+  set(SUBCONVERTER_WEBSERVER_BACKEND "libevent" CACHE STRING "WebServer backend: libevent or kleinshttp")
+endif()
+
 set_property(CACHE SUBCONVERTER_WEBSERVER_BACKEND PROPERTY STRINGS libevent kleinshttp)
 
 if(NOT SUBCONVERTER_WEBSERVER_BACKEND MATCHES "^(libevent|kleinshttp)$")

@@ -236,28 +236,43 @@ elseif(SUBCONVERTER_WEBSERVER_BACKEND STREQUAL "kleinshttp")
   if(NOT kleinshttp_POPULATED)
     FetchContent_Populate(kleinshttp)
 
-    add_library(kleinsHTTP-static STATIC
-      ${kleinshttp_SOURCE_DIR}/source/httpParser/httpParser.cpp
-      ${kleinshttp_SOURCE_DIR}/source/httpServer/httpServer.cpp
-      ${kleinshttp_SOURCE_DIR}/source/socketBase/socketBase.cpp
-      ${kleinshttp_SOURCE_DIR}/source/packet/packet.cpp
-      ${kleinshttp_SOURCE_DIR}/source/tcpSocket/tcpSocket.cpp
-      ${kleinshttp_SOURCE_DIR}/source/sessionBase/sessionBase.cpp
-      ${kleinshttp_SOURCE_DIR}/source/tcpConnection/tcpConnection.cpp
-      ${kleinshttp_SOURCE_DIR}/source/connectionBase/connectionBase.cpp
-      ${kleinshttp_SOURCE_DIR}/source/metricsServer/metricsServer.cpp
-      ${kleinshttp_SOURCE_DIR}/source/metricBase/metricBase.cpp
-      ${kleinshttp_SOURCE_DIR}/source/counterMetric/counterMetric.cpp
-      ${kleinshttp_SOURCE_DIR}/source/histogramMetric/histogramMetric.cpp
-      ${kleinshttp_SOURCE_DIR}/source/gaugeMetric/gaugeMetric.cpp
-    )
+    if(DEFINED ENV{TOOLCHAIN_KIND})
+      patch_directory("${kleinshttp_SOURCE_DIR}" "${CMAKE_CURRENT_LIST_DIR}/patches/kleinsHTTP/no-openssl.patch")
+      patch_directory("${kleinshttp_SOURCE_DIR}" "${CMAKE_CURRENT_LIST_DIR}/patches/kleinsHTTP/win32-sockets.patch")
 
-    target_include_directories(kleinsHTTP-static PUBLIC
-      ${kleinshttp_SOURCE_DIR}/source
-      ${kleinshttp_SOURCE_DIR}
-    )
+      add_library(kleinsHTTP-static STATIC
+        ${kleinshttp_SOURCE_DIR}/source/httpParser/httpParser.cpp
+        ${kleinshttp_SOURCE_DIR}/source/httpServer/httpServer.cpp
+        ${kleinshttp_SOURCE_DIR}/source/socketBase/socketBase.cpp
+        ${kleinshttp_SOURCE_DIR}/source/packet/packet.cpp
+        ${kleinshttp_SOURCE_DIR}/source/tcpSocket/tcpSocket.cpp
+        ${kleinshttp_SOURCE_DIR}/source/sessionBase/sessionBase.cpp
+        ${kleinshttp_SOURCE_DIR}/source/tcpConnection/tcpConnection.cpp
+        ${kleinshttp_SOURCE_DIR}/source/connectionBase/connectionBase.cpp
+        ${kleinshttp_SOURCE_DIR}/source/metricsServer/metricsServer.cpp
+        ${kleinshttp_SOURCE_DIR}/source/metricBase/metricBase.cpp
+        ${kleinshttp_SOURCE_DIR}/source/counterMetric/counterMetric.cpp
+        ${kleinshttp_SOURCE_DIR}/source/histogramMetric/histogramMetric.cpp
+        ${kleinshttp_SOURCE_DIR}/source/gaugeMetric/gaugeMetric.cpp
+      )
 
-    target_compile_features(kleinsHTTP-static PUBLIC cxx_std_17)
+      target_include_directories(kleinsHTTP-static PUBLIC
+        ${kleinshttp_SOURCE_DIR}/source
+        ${kleinshttp_SOURCE_DIR}
+      )
+
+      target_link_libraries(kleinsHTTP-static PUBLIC
+        Threads::Threads
+      )
+
+      target_compile_definitions(kleinsHTTP-static PUBLIC
+        "KLEINSHTTP_NO_SSL"
+      )
+
+      target_compile_features(kleinsHTTP-static PUBLIC cxx_std_17)
+    else()
+      add_subdirectory(${kleinshttp_SOURCE_DIR} ${kleinshttp_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif()
   endif()
 endif()
 
@@ -378,6 +393,7 @@ FetchContent_Declare(libcron
 FetchContent_GetProperties(libcron)
 if(NOT libcron_POPULATED)
   FetchContent_Populate(libcron)
+  patch_directory("${libcron_SOURCE_DIR}" "${CMAKE_CURRENT_LIST_DIR}/patches/libcron/windows-header-case.patch")
   add_subdirectory(${libcron_SOURCE_DIR}/libcron/externals/date ${libcron_BINARY_DIR}/libcron/externals/date EXCLUDE_FROM_ALL)
   file(GLOB_RECURSE libcron_src
     ${libcron_SOURCE_DIR}/libcron/src/*.cpp

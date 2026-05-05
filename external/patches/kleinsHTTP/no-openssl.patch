@@ -1,0 +1,40 @@
+--- a/source/httpServer/httpServer.h
++++ b/source/httpServer/httpServer.h
+@@ -4,7 +4,9 @@
+ #include <filesystem>
+ #include <fstream>
+ #include <list>
++#ifndef KLEINSHTTP_NO_SSL
+ #include <openssl/rand.h>
++#endif
+ 
+ #ifndef SINGLE_HEADER
+ #include "../connectionBase/connectionBase.h"
+--- a/source/templates.h
++++ b/source/templates.h
+@@ -1,6 +1,9 @@
+ #ifndef SINGLE_HEADER
+ #include "httpParser/httpParser.h"
+ #include "httpServer/httpServer.h"
++#ifdef KLEINSHTTP_NO_SSL
++#include <random>
++#endif
+ #endif
+ 
+ template <class T> kleins::sessionBase* kleins::httpParser::startSession() {
+@@ -27,7 +30,15 @@
+   char* newKey = new char[33];
+   newKey[32] = 0;
+ 
++#ifdef KLEINSHTTP_NO_SSL
++  {
++    std::random_device _rd;
++    for (int i = 0; i < 32; i++)
++      reinterpret_cast<unsigned char*>(newKey)[i] = static_cast<unsigned char>(_rd() & 0xFF);
++  }
++#else
+   RAND_bytes((unsigned char*)newKey, 32);
++#endif
+ 
+   for (int i = 0; i < 32; i++) {
+     newKey[i] = keychars[((unsigned int)newKey[i]) % 62];
