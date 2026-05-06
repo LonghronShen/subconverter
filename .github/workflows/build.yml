@@ -11,7 +11,7 @@ permissions:
 jobs:
   linux_multi_arch_build:
     # The host should always be linux
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
 
     # Run steps on a matrix of these arch/distro combinations
@@ -229,7 +229,7 @@ jobs:
               msystem: MINGW32,
               env: mingw-i686,
               name: win32,
-              libevent_pkg: mingw-w64-i686-libevent2,
+              libevent_pkg: mingw-w64-i686-libevent,
             }
 
     defaults:
