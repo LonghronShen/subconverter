@@ -112,7 +112,7 @@ jobs:
   # For building Entware package
   entware_multi_arch_build:
     # The host should always be linux
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
 
     # Run steps on a matrix of these arch/distro combinations
@@ -223,13 +223,11 @@ jobs:
               msystem: CLANG64,
               env: clang-x86_64,
               name: win64,
-              libevent_pkg: mingw-w64-clang-x86_64-libevent,
             }
           - {
               msystem: MINGW32,
               env: mingw-i686,
               name: win32,
-              libevent_pkg: mingw-w64-i686-libevent,
             }
 
     defaults:
@@ -249,10 +247,7 @@ jobs:
           install: >-
             git make patch binutils
           pacboy: >-
-            toolchain:p cmake:p ninja:p pcre2:p boost:p
-
-      - name: Install libevent
-        run: pacman --noconfirm --needed -S ${{ matrix.libevent_pkg }}
+            toolchain:p cmake:p ninja:p pcre2:p boost:p libevent:p
 
       - name: Build
         run: cd scripts && bash ./build.windows.release.sh
