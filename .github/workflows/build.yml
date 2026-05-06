@@ -87,7 +87,7 @@ jobs:
 
             uname -a
 
-            echo "uname=$(uname -a)" >> "$GITHUB_OUTPUT"
+            echo ::set-output name=uname::$(uname -a)
 
             git config --global --add safe.directory '*'
 
@@ -165,7 +165,7 @@ jobs:
 
             uname -a
 
-            echo "uname=$(uname -a)" >> "$GITHUB_OUTPUT"
+            echo ::set-output name=uname::$(uname -a)
 
             git config --global --add safe.directory '*'
 
@@ -224,11 +224,11 @@ jobs:
               env: clang-x86_64,
               name: win64,
             }
-          - {
-              msystem: MINGW32,
-              env: mingw-i686,
-              name: win32,
-            }
+          # - {
+          #     msystem: MINGW32,
+          #     env: mingw-i686,
+          #     name: win32,
+          #   }
 
     defaults:
       run:

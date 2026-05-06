@@ -54,7 +54,7 @@ void WebServer::on_request(void *req_ptr, void *args)
     const char *req_content_type = evhttp_find_header(req->input_headers, "Content-Type"), *req_ac_method = evhttp_find_header(req->input_headers, "Access-Control-Request-Method");
     const char *uri = req->uri, *internal_flag = evhttp_find_header(req->input_headers, "SubConverter-Request");
 
-    char *client_ip;
+    const char *client_ip;
     u_short client_port;
     evhttp_connection_get_peer(evhttp_request_get_connection(req), &client_ip, &client_port);
     //std::cerr<<"Accept connection from client "<<client_ip<<":"<<client_port<<"\n";
