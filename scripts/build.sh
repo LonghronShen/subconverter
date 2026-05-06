@@ -30,7 +30,6 @@ case "$TOOLCHAIN_KIND" in
         ;;
     *)
         echo "Using Host toolchain (no CMake toolchain file)"
-        TOOLCHAIN_FILE=""
         ;;
 esac
 
@@ -39,7 +38,13 @@ cd "$SCRIPTPATH/.."
 mkdir -p build
 
 pushd build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" ..
+
+if [[ -n "$TOOLCHAIN_FILE" ]]; then
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" ..
+else
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+fi
+
 cmake --build . -j "$THREADS"
 pushd bin
 # Windows cross/native toolchains generate subconverter.exe, while host builds may generate subconverter.

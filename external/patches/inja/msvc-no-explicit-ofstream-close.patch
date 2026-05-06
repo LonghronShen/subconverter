@@ -1,0 +1,18 @@
+diff --git a/include/inja/environment.hpp b/include/inja/environment.hpp
+index 381e8de..f6fd8fc 100644
+--- a/include/inja/environment.hpp
++++ b/include/inja/environment.hpp
+@@ -125,13 +125,11 @@ public:
+   void write(const std::string &filename, const json &data, const std::string &filename_out) {
+     std::ofstream file(output_path + filename_out);
+     file << render_file(filename, data);
+-    file.close();
+   }
+ 
+   void write(const Template &temp, const json &data, const std::string &filename_out) {
+     std::ofstream file(output_path + filename_out);
+     file << render(temp, data);
+-    file.close();
+   }
+ 
+   void write_with_json_file(const std::string &filename, const std::string &filename_data,
