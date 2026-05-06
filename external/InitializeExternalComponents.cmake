@@ -286,6 +286,7 @@ FetchContent_Declare(json
 FetchContent_GetProperties(json)
 if(NOT json_POPULATED)
   FetchContent_Populate(json)
+  patch_directory(${json_SOURCE_DIR} "${CMAKE_SOURCE_DIR}/external/patches/json/fix-cmake-minimum-required.patch")
   add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
