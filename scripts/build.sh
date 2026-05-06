@@ -4,7 +4,16 @@ set -xe
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-export THREADS="$(nproc)"
+
+# Prefer nproc when available, but fall back to sysctl on platforms like macOS.
+if command -v nproc >/dev/null 2>&1; then
+    export THREADS="$(nproc)"
+elif command -v sysctl >/dev/null 2>&1; then
+    export THREADS="$(sysctl -n hw.logicalcpu 2>/dev/null || echo 1)"
+else
+    export THREADS="1"
+fi
+
 export SHA="$(git rev-parse HEAD)"
 
 case "$TOOLCHAIN_KIND" in
@@ -33,7 +42,12 @@ pushd build
 cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" ..
 cmake --build . -j "$THREADS"
 pushd bin
-chmod +rx subconverter
+# Windows cross/native toolchains generate subconverter.exe, while host builds may generate subconverter.
+if [[ -f subconverter ]]; then
+    chmod +rx subconverter
+elif [[ -f subconverter.exe ]]; then
+    chmod +rx subconverter.exe
+fi
 chmod +r ./*
 popd
 popd

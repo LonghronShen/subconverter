@@ -220,7 +220,7 @@ jobs:
       matrix:
         include:
           - { msystem: CLANG64, env: clang-x86_64, name: win64 }
-          - { msystem: CLANG32, env: clang-i686, name: win32 }
+          - { msystem: MINGW32, env: mingw-i686, name: win32 }
 
     defaults:
       run:

@@ -1,0 +1,11 @@
+--- a/CMakeRC.cmake
++++ b/CMakeRC.cmake
+@@ -34,7 +34,7 @@ if(_CMRC_GENERATE_MODE)
+     return()
+ endif()
+ 
+-cmake_minimum_required(VERSION 3.3)
++cmake_minimum_required(VERSION 3.5)
+ include(CMakeParseArguments)
+ 
+ if(COMMAND cmrc_add_resource_library)

@@ -173,6 +173,7 @@ FetchContent_Declare(cmrc
 FetchContent_GetProperties(cmrc)
 if(NOT cmrc_POPULATED)
     FetchContent_Populate(cmrc)
+    patch_directory(${cmrc_SOURCE_DIR} "${CMAKE_SOURCE_DIR}/external/patches/cmrc/fix-cmake-minimum-required.patch")
     add_subdirectory(${cmrc_SOURCE_DIR} ${cmrc_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
