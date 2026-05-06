@@ -1,6 +1,7 @@
 {
     "name": "main",
     "version-string": "latest",
+    "builtin-baseline": "4b6bce313ef917b9635e9287d06225743e242888",
     "dependencies": [
         "pthreads",
         "boost",

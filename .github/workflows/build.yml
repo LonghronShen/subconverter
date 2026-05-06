@@ -1,5 +1,5 @@
 name: GitHub CI
-on: [push]
+on: [ push ]
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -178,7 +178,8 @@ jobs:
           path: subconverter/
       - name: Package Release
         if: startsWith(github.ref, 'refs/tags/')
-        run: tar czf subconverter_${{ matrix.distro }}_${{ matrix.arch }}.tar.gz subconverter
+        run: tar czf subconverter_${{ matrix.distro }}_${{ matrix.arch }}.tar.gz
+          subconverter
       - name: Draft Release
         uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
@@ -215,12 +216,21 @@ jobs:
     runs-on: windows-latest
     name: Build on msystem ${{ matrix.msystem }} ${{ matrix.env }}
 
-    # Run steps on a matrix of 3 arch/distro combinations
     strategy:
       matrix:
         include:
-          - { msystem: CLANG64, env: clang-x86_64, name: win64 }
-          - { msystem: MINGW32, env: mingw-i686, name: win32 }
+          - {
+              msystem: CLANG64,
+              env: clang-x86_64,
+              name: win64,
+              libevent_pkg: mingw-w64-clang-x86_64-libevent,
+            }
+          - {
+              msystem: MINGW32,
+              env: mingw-i686,
+              name: win32,
+              libevent_pkg: mingw-w64-i686-libevent2,
+            }
 
     defaults:
       run:
@@ -231,32 +241,32 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
       - uses: msys2/setup-msys2@v2
         with:
           update: false
-          msystem: ${{matrix.msystem}}
+          msystem: ${{ matrix.msystem }}
           install: >-
-            git
-            make
-            patch
-            binutils
+            git make patch binutils
           pacboy: >-
-            toolchain:p
-            cmake:p
-            ninja:p
-            libevent:p
-            pcre2:p
-            boost:p
+            toolchain:p cmake:p ninja:p pcre2:p boost:p
+
+      - name: Install libevent
+        run: pacman --noconfirm --needed -S ${{ matrix.libevent_pkg }}
+
       - name: Build
         run: cd scripts && bash ./build.windows.release.sh
+
       - name: Upload
         uses: actions/upload-artifact@v7
         with:
           name: subconverter_${{ matrix.name }}
           path: subconverter/
+
       - name: Package Release
         if: startsWith(github.ref, 'refs/tags/')
         run: 7z a subconverter_${{ matrix.name }}.7z subconverter/
+
       - name: Draft Release
         uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
@@ -307,11 +317,7 @@ jobs:
         include:
           - { arch: amd64, name: msvc_win64, triplet: x64-windows-static }
           - { arch: x86, name: msvc_win32, triplet: x86-windows-static }
-          - {
-              arch: amd64_arm64,
-              name: msvc_arm64,
-              triplet: arm64-windows-static,
-            }
+          - { arch: amd64_arm64, name: msvc_arm64, triplet: arm64-windows-static }
 
     env:
       # Indicates the location of the vcpkg as a Git submodule of the project repository.
