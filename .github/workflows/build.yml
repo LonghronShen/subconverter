@@ -150,7 +150,11 @@ jobs:
             set -x
 
             opkg update
-            opkg install libatomic libevent2-dev
+            opkg install libatomic libevent2-openssl
+
+            /opt/bin/busybox wget -qO- "$(/opt/bin/busybox sed -Ene \
+              's|^src/gz[[:space:]]entware[[:space:]]https?([[:graph:]]+)|http\1/include/include.tar.gz|p' \
+              /opt/etc/opkg.conf)" | /opt/bin/busybox tar x -vzC /opt/include
 
             ldconfig -p
 
