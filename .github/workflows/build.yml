@@ -154,6 +154,7 @@ jobs:
 
             opkg update
             opkg install libatomic
+            opkg install libevent2-dev
 
             ldconfig -p
 

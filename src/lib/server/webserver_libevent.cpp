@@ -46,6 +46,20 @@ static inline void buffer_cleanup(struct evbuffer *eb)
 #endif // MALLOC_TRIM
 }
 
+static inline void get_client_peer(struct evhttp_connection *connection, const char **address, ev_uint16_t *port,
+    void (*get_peer)(struct evhttp_connection *, char **, ev_uint16_t *))
+{
+    char *mutable_address = nullptr;
+    get_peer(connection, &mutable_address, port);
+    *address = mutable_address;
+}
+
+static inline void get_client_peer(struct evhttp_connection *connection, const char **address, ev_uint16_t *port,
+    void (*get_peer)(struct evhttp_connection *, const char **, ev_uint16_t *))
+{
+    get_peer(connection, address, port);
+}
+
 void WebServer::on_request(void *req_ptr, void *args)
 {
     (void)args;
@@ -54,14 +68,9 @@ void WebServer::on_request(void *req_ptr, void *args)
     const char *req_content_type = evhttp_find_header(req->input_headers, "Content-Type"), *req_ac_method = evhttp_find_header(req->input_headers, "Access-Control-Request-Method");
     const char *uri = req->uri, *internal_flag = evhttp_find_header(req->input_headers, "SubConverter-Request");
 
-#ifdef MSVC
     const char *client_ip;
-#else
-    char *client_ip;
-#endif
-
     u_short client_port;
-    evhttp_connection_get_peer(evhttp_request_get_connection(req), &client_ip, &client_port);
+    get_client_peer(evhttp_request_get_connection(req), &client_ip, &client_port, &evhttp_connection_get_peer);
     //std::cerr<<"Accept connection from client "<<client_ip<<":"<<client_port<<"\n";
     writeLog(0, "Accept connection from client " + std::string(client_ip) + ":" + std::to_string(client_port), LOG_LEVEL_DEBUG);
 
@@ -294,4 +303,3 @@ int WebServer::start_web_server_multi(void *argv)
 
     return 0;
 }
-
