@@ -152,10 +152,11 @@ jobs:
           install: |
             set -x
 
-            opkg update
-            opkg install libatomic
+             opkg update
+             opkg install libatomic
+             opkg install libevent2-dev
 
-            ldconfig -p
+             ldconfig -p
 
           shell: /opt/bin/bash
 
