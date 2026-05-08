@@ -150,7 +150,7 @@ jobs:
             set -x
 
             opkg update
-            opkg install libatomic
+            opkg install libatomic libevent2-dev
 
             ldconfig -p
 
