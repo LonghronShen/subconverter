@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   linux_multi_arch_build:
+    if: github.ref == 'refs/heads/master'
     # The host should always be linux
     runs-on: ubuntu-latest
     name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
@@ -152,14 +153,14 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: LonghronShen/run-on-arch-action@master
+      - uses: uraimo/run-on-arch-action@v3
         name: Run commands
         id: runcmd
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
           base_image: ${{ matrix.base_image }}
-          qemu_static_image: longhronshens/qemu-user-static
+          # qemu_static_image: longhronshens/qemu-user-static
 
           # Not required, but speeds up builds by storing container images in
           # a GitHub package registry.
@@ -207,6 +208,7 @@ jobs:
           draft: true
 
   macos_build:
+    if: github.ref == 'refs/heads/master'
     name: macOS Build
     runs-on: macos-latest
     steps:
@@ -232,6 +234,7 @@ jobs:
           draft: true
 
   windows_build:
+    if: github.ref == 'refs/heads/master'
     runs-on: windows-latest
     name: Build on msystem ${{ matrix.msystem }} ${{ matrix.env }}
 
@@ -289,6 +292,7 @@ jobs:
           draft: true
 
   legacy_win32_build:
+    if: github.ref == 'refs/heads/master'
     name: Legacy Win32 Build
     runs-on: ubuntu-22.04
     steps:
@@ -323,6 +327,7 @@ jobs:
           draft: true
 
   build_win_msvc:
+    if: github.ref == 'refs/heads/master'
     name: windows-msvc-${{ matrix.arch }}
     runs-on: windows-latest
     strategy:
