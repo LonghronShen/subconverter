@@ -46,10 +46,13 @@ if [[ -n "$TOOLCHAIN_FILE" ]]; then
 fi
 
 if [[ -n "${CMAKE_EXTRA_CONFIGURE_ARGS:-}" ]]; then
-    while IFS= read -r extra_arg; do
+    mapfile -t extra_configure_args <<< "${CMAKE_EXTRA_CONFIGURE_ARGS}"
+    for extra_arg in "${extra_configure_args[@]}"; do
+        extra_arg="${extra_arg#"${extra_arg%%[![:space:]]*}"}"
+        extra_arg="${extra_arg%"${extra_arg##*[![:space:]]}"}"
         [[ -n "$extra_arg" ]] || continue
         cmake_configure_args+=("$extra_arg")
-    done <<< "${CMAKE_EXTRA_CONFIGURE_ARGS}"
+    done
 fi
 
 cmake_configure_args+=(..)
