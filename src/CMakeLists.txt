@@ -145,6 +145,9 @@ if(WIN32)
         PUBLIC iphlpapi
     )
     if(MSVC)
+        target_link_libraries(${BUILD_TARGET_NAME}-lib
+            PUBLIC bcrypt
+        )
         if(PThreads4W_FOUND)
             target_link_libraries(${BUILD_TARGET_NAME}-lib
                 PUBLIC PThreads4W::PThreads4W
