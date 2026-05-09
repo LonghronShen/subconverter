@@ -46,10 +46,10 @@ if [[ -n "$TOOLCHAIN_FILE" ]]; then
 fi
 
 if [[ -n "${CMAKE_EXTRA_CONFIGURE_ARGS:-}" ]]; then
-    # CMAKE_EXTRA_CONFIGURE_ARGS intentionally uses shell-style splitting.
-    # shellcheck disable=SC2206
-    extra_configure_args=(${CMAKE_EXTRA_CONFIGURE_ARGS})
-    cmake_configure_args+=("${extra_configure_args[@]}")
+    while IFS= read -r extra_arg; do
+        [[ -n "$extra_arg" ]] || continue
+        cmake_configure_args+=("$extra_arg")
+    done <<< "${CMAKE_EXTRA_CONFIGURE_ARGS}"
 fi
 
 cmake_configure_args+=(..)

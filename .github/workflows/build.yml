@@ -122,15 +122,27 @@ jobs:
           - arch: aarch64
             distro: entware-aarch64-k3.10
             base_image: longhronshens/entware-builder:aarch64-k3.10-latest
-            cmake_configure_args: --compile-no-warning-as-error -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DINTERPROCEDURAL_OPTIMIZATION=OFF
+            cmake_configure_args: |
+              --compile-no-warning-as-error
+              -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+              -DINTERPROCEDURAL_OPTIMIZATION=OFF
+              -DSUBCONVERTER_DISABLE_IPO_LTO=ON
           - arch: armv7
             distro: entware-armv7sf-k3.2
             base_image: longhronshens/entware-builder:armv7sf-k3.2-latest
-            cmake_configure_args: --compile-no-warning-as-error -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DINTERPROCEDURAL_OPTIMIZATION=OFF
+            cmake_configure_args: |
+              --compile-no-warning-as-error
+              -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+              -DINTERPROCEDURAL_OPTIMIZATION=OFF
+              -DSUBCONVERTER_DISABLE_IPO_LTO=ON
           - arch: mipsel
             distro: entware-mipselsf-k3.4
             base_image: longhronshens/entware-builder:mipselsf-k3.4-latest
-            cmake_configure_args: --compile-no-warning-as-error -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DINTERPROCEDURAL_OPTIMIZATION=OFF
+            cmake_configure_args: |
+              --compile-no-warning-as-error
+              -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+              -DINTERPROCEDURAL_OPTIMIZATION=OFF
+              -DSUBCONVERTER_DISABLE_IPO_LTO=ON
 
     steps:
       - name: Checkout
