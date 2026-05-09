@@ -160,6 +160,8 @@ jobs:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
           base_image: ${{ matrix.base_image }}
+          qemu_static_image: longhronshens/qemu-user-static
+          
           githubToken: ${{ github.token }}
 
           shell: /opt/bin/bash
