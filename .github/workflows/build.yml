@@ -122,12 +122,15 @@ jobs:
           - arch: aarch64
             distro: entware-aarch64-k3.10
             base_image: longhronshens/entware-builder:aarch64-k3.10-latest
+            cmake_configure_args: --compile-no-warning-as-error -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DINTERPROCEDURAL_OPTIMIZATION=OFF
           - arch: armv7
             distro: entware-armv7sf-k3.2
             base_image: longhronshens/entware-builder:armv7sf-k3.2-latest
+            cmake_configure_args: --compile-no-warning-as-error -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DINTERPROCEDURAL_OPTIMIZATION=OFF
           - arch: mipsel
             distro: entware-mipselsf-k3.4
             base_image: longhronshens/entware-builder:mipselsf-k3.4-latest
+            cmake_configure_args: --compile-no-warning-as-error -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DINTERPROCEDURAL_OPTIMIZATION=OFF
 
     steps:
       - name: Checkout
@@ -170,6 +173,7 @@ jobs:
             git config --global --add safe.directory '*'
 
             source /opt/bin/gcc_env.sh
+            export CMAKE_EXTRA_CONFIGURE_ARGS="${{ matrix.cmake_configure_args }}"
             bash ./scripts/build.sh
       - name: Upload
         uses: actions/upload-artifact@v7

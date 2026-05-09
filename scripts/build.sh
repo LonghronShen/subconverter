@@ -39,11 +39,21 @@ mkdir -p build
 
 pushd build
 
+cmake_configure_args=(-G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo)
+
 if [[ -n "$TOOLCHAIN_FILE" ]]; then
-    cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" ..
-else
-    cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+    cmake_configure_args+=(-DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE")
 fi
+
+if [[ -n "${CMAKE_EXTRA_CONFIGURE_ARGS:-}" ]]; then
+    # CMAKE_EXTRA_CONFIGURE_ARGS intentionally uses shell-style splitting.
+    # shellcheck disable=SC2206
+    extra_configure_args=(${CMAKE_EXTRA_CONFIGURE_ARGS})
+    cmake_configure_args+=("${extra_configure_args[@]}")
+fi
+
+cmake_configure_args+=(..)
+cmake "${cmake_configure_args[@]}"
 
 cmake --build . -j "$THREADS"
 pushd bin
