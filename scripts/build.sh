@@ -39,11 +39,24 @@ mkdir -p build
 
 pushd build
 
+cmake_configure_args=(-G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo)
+
 if [[ -n "$TOOLCHAIN_FILE" ]]; then
-    cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" ..
-else
-    cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+    cmake_configure_args+=(-DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE")
 fi
+
+if [[ -n "${CMAKE_EXTRA_CONFIGURE_ARGS:-}" ]]; then
+    mapfile -t extra_configure_args <<< "${CMAKE_EXTRA_CONFIGURE_ARGS}"
+    for extra_arg in "${extra_configure_args[@]}"; do
+        extra_arg="${extra_arg#"${extra_arg%%[![:space:]]*}"}"
+        extra_arg="${extra_arg%"${extra_arg##*[![:space:]]}"}"
+        [[ -n "$extra_arg" ]] || continue
+        cmake_configure_args+=("$extra_arg")
+    done
+fi
+
+cmake_configure_args+=(..)
+cmake "${cmake_configure_args[@]}"
 
 cmake --build . -j "$THREADS"
 pushd bin

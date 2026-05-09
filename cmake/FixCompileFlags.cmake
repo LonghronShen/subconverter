@@ -74,13 +74,20 @@ check_cxx_source_compiles("
 
 include(find_filesystem)
 
-include(CheckIPOSupported)
-check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
+option(SUBCONVERTER_DISABLE_IPO_LTO "Disable IPO / LTO for this configure run." OFF)
 
-if(lto_supported)
-    message(STATUS "IPO / LTO enabled")
-    set(INTERPROCEDURAL_OPTIMIZATION TRUE CACHE BOOL "INTERPROCEDURAL_OPTIMIZATION" FORCE)
-else()
-    message(STATUS "IPO / LTO not supported: <${lto_error}>")
+if(SUBCONVERTER_DISABLE_IPO_LTO)
+    message(STATUS "IPO / LTO disabled by SUBCONVERTER_DISABLE_IPO_LTO")
     set(INTERPROCEDURAL_OPTIMIZATION FALSE CACHE BOOL "INTERPROCEDURAL_OPTIMIZATION" FORCE)
+else()
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
+
+    if(lto_supported)
+        message(STATUS "IPO / LTO enabled")
+        set(INTERPROCEDURAL_OPTIMIZATION TRUE CACHE BOOL "INTERPROCEDURAL_OPTIMIZATION" FORCE)
+    else()
+        message(STATUS "IPO / LTO not supported: <${lto_error}>")
+        set(INTERPROCEDURAL_OPTIMIZATION FALSE CACHE BOOL "INTERPROCEDURAL_OPTIMIZATION" FORCE)
+    endif()
 endif()
