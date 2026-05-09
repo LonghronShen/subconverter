@@ -127,6 +127,7 @@ jobs:
               -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
               -DINTERPROCEDURAL_OPTIMIZATION=OFF
               -DSUBCONVERTER_DISABLE_IPO_LTO=ON
+              -DCMAKE_RANLIB=/opt/bin/gcc-ar
           - arch: armv7
             distro: entware-armv7sf-k3.2
             base_image: longhronshens/entware-builder:armv7sf-k3.2-latest
@@ -135,6 +136,7 @@ jobs:
               -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
               -DINTERPROCEDURAL_OPTIMIZATION=OFF
               -DSUBCONVERTER_DISABLE_IPO_LTO=ON
+              -DCMAKE_RANLIB=/opt/bin/gcc-ar
           - arch: mipsel
             distro: entware-mipselsf-k3.4
             base_image: longhronshens/entware-builder:mipselsf-k3.4-latest
@@ -143,6 +145,7 @@ jobs:
               -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
               -DINTERPROCEDURAL_OPTIMIZATION=OFF
               -DSUBCONVERTER_DISABLE_IPO_LTO=ON
+              -DCMAKE_RANLIB=/opt/bin/gcc-ar
 
     steps:
       - name: Checkout
